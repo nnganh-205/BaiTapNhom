@@ -1,0 +1,96 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Báo cáo doanh thu - InvenStory{% endblock %}
+
+{% block head %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="report-title">Báo cáo doanh thu</h1>
+    <div class="header-actions">
+        <select class="report-select">
+            <option>Tùy chọn</option>
+        </select>
+        <button class="btn btn-upload">
+            <i class="fa-regular fa-calendar-days"></i> Chọn thời gian
+        </button>
+        <button class="btn btn-add">
+            <i class="fa-solid fa-magnifying-glass"></i> Xem báo cáo
+        </button>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="data-card stat-card">
+        <h2>0đ</h2>
+        <p>Doanh thu kỳ này</p>
+    </div>
+    <div class="data-card stat-card">
+        <h2>0đ</h2>
+        <p>Doanh thu kỳ trước</p>
+    </div>
+    <div class="data-card stat-card">
+        <h2 class="text-muted">-- %</h2>
+        <p>Tỉ lệ tăng trưởng</p>
+    </div>
+</div>
+
+<div class="data-card chart-container">
+    <div class="chart-header">
+        <h4 class="card-title">So sánh cùng kỳ</h4>
+        <div class="chart-legend">
+            <span class="legend-item current"><span class="line"></span> Kỳ này</span>
+            <span class="legend-item previous"><span class="line dashed"></span> Kỳ trước</span>
+        </div>
+    </div>
+    <div class="chart-wrapper">
+        <canvas id="revenueChart"></canvas>
+        <div class="empty-state-overlay">
+            <i class="fa-solid fa-chart-area"></i>
+            <p>Đang chờ dữ liệu phân tích hệ thống...</p>
+        </div>
+    </div>
+</div>
+
+<div class="report-bottom-section">
+    <div class="data-card tabs-card">
+        <div class="report-tab active" data-type="product">
+            <span>Doanh thu theo sản phẩm</span>
+        </div>
+        <div class="report-tab" data-type="category">
+            <span>Doanh thu theo danh mục</span>
+        </div>
+    </div>
+
+    <div class="data-card table-card">
+        <div class="table-header-reports">
+            <input type="text" id="reportSearch" placeholder="Nhập tên sản phẩm, sku hoặc mã vạch...">
+            <button class="btn btn-add">Tìm kiếm</button>
+        </div>
+
+        <table class="table-reports">
+            <thead>
+                <tr>
+                    <th id="col-name" style="width: 45%;">Tiêu chí</th>
+                    <th>Số lượng bán</th>
+                    <th>Doanh thu</th>
+                </tr>
+            </thead>
+            <tbody id="report-tbody">
+                <tr>
+                    <td colspan="3" class="empty-state">
+                        <i class="fa-solid fa-server"></i>
+                        <p>Cơ sở dữ liệu thống kê đang trống.</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Danh mục sản phẩm - InvenStory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 style="font-size: 24px; font-weight: 600;">Danh mục sản phẩm</h1>
+    <div class="actions">
+        <button class="btn btn-upload">
+            <i class="fa-solid fa-upload"></i> Tải lên
+        </button>
+        <button class="btn btn-add">
+            <i class="fa-solid fa-plus"></i> Thêm mới
+        </button>
+    </div>
+</div>
+
+<div class="data-card">
+    <table>
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên danh mục</th>
+                <th>Mã danh mục</th>
+                <th>Số lượng món</th>
+                <th>Ngày tạo</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody id="categoryTable">
+            <tr>
+                <td colspan="6" class="empty-state">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <p>Chưa có dữ liệu danh mục. Vui lòng thêm mới hoặc kết nối Database.</p>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

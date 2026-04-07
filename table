@@ -1,0 +1,134 @@
+-- ========================================================
+-- 1. NGƯỜI DÙNG (Quản lý Đăng ký/Đăng nhập & Profile)
+-- ========================================================
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL, -- Tên đăng nhập
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL, -- Mật khẩu mã hóa
+    phone VARCHAR(15),
+    address TEXT, -- Địa chỉ mặc định
+    role ENUM('customer', 'admin') DEFAULT 'customer',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ========================================================
+-- 2. DANH MỤC (Phân loại: Burger, Gà rán, Đồ uống...)
+-- ========================================================
+CREATE TABLE categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    category_code VARCHAR(10) UNIQUE NOT NULL, -- Ví dụ: BG, GR, MY
+    name VARCHAR(100) NOT NULL,
+    description TEXT
+);
+
+-- ========================================================
+-- 3. SẢN PHẨM (Thông tin gốc & Định lượng)
+-- ========================================================
+CREATE TABLE products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sku VARCHAR(20) UNIQUE NOT NULL, -- Mã định danh sản phẩm
+    category_id INT,
+    name VARCHAR(150) NOT NULL,
+    description TEXT, -- Nơi lưu định lượng (200g bò, 1 lát phô mai...)
+    image_url VARCHAR(255),
+    is_available BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+);
+
+-- ========================================================
+-- 4. BIẾN THỂ SẢN PHẨM (Giải quyết bài toán chọn Size Vừa/To)
+-- ========================================================
+CREATE TABLE product_variants (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT,
+    size_name VARCHAR(50) NOT NULL, -- Ví dụ: 'Vừa', 'To'
+    price DECIMAL(10,2) NOT NULL, -- Giá cụ thể cho từng size
+    stock INT DEFAULT 0, -- Tồn kho theo từng size
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+-- ========================================================
+-- 5. GIỎ HÀNG & CHI TIẾT GIỎ HÀNG
+-- ========================================================
+CREATE TABLE carts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNIQUE, -- Mỗi user chỉ có 1 giỏ hàng duy nhất
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE cart_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cart_id INT,
+    product_id INT,
+    variant_id INT, -- Khách chọn size nào thì lưu variant đó
+    quantity INT NOT NULL DEFAULT 1,
+    FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (variant_id) REFERENCES product_variants(id)
+);
+
+-- ========================================================
+-- 6. ĐƠN HÀNG (Thông tin tổng quát giao dịch)
+-- ========================================================
+CREATE TABLE orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_code VARCHAR(20) UNIQUE NOT NULL, -- Ví dụ: ORD-168234
+    user_id INT,
+    total_price DECIMAL(12,2) NOT NULL,
+    status ENUM('pending', 'confirmed', 'shipping', 'completed', 'cancelled') DEFAULT 'pending',
+    shipping_address TEXT NOT NULL, -- Lưu địa chỉ lúc chốt đơn
+    note TEXT, -- Ghi chú của khách (ví dụ: không lấy hành)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- ========================================================
+-- 7. CHI TIẾT ĐƠN HÀNG (Lưu vết lịch sử mua món)
+-- ========================================================
+CREATE TABLE order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    product_id INT,
+    variant_id INT,
+    quantity INT NOT NULL,
+    price_at_purchase DECIMAL(10,2) NOT NULL, -- Giá tại thời điểm mua (Chuẩn 3NF)
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (variant_id) REFERENCES product_variants(id)
+);
+
+-- ========================================================
+-- 8. THANH TOÁN (Hỗ trợ tích hợp VNPay)
+-- ========================================================
+CREATE TABLE payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    payment_method ENUM('cod', 'vnpay', 'momo') NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    payment_status ENUM('pending', 'success', 'failed') DEFAULT 'pending',
+    vnp_txn_ref VARCHAR(100), -- Mã tham chiếu giao dịch VNPay
+    vnp_transaction_no VARCHAR(100), -- Mã giao dịch bên VNPay trả về
+    vnp_response_code VARCHAR(10), -- Mã phản hồi thành công (00) hay lỗi
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+
+-- ========================================================
+-- 9. ĐÁNH GIÁ (Góp ý khách hàng)
+-- ========================================================
+CREATE TABLE reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    order_id INT, -- Đánh giá theo đơn hàng (Chuẩn Shopee Food)
+    rating INT CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    is_read BOOLEAN DEFAULT FALSE, -- Admin đã xem hay chưa
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    UNIQUE (user_id, order_id) -- Mỗi đơn khách chỉ đánh giá 1 lần
+);

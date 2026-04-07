@@ -1,0 +1,133 @@
+{% extends "user/layout.html" %}
+
+{% block title %}Trang chủ - InvenStory Fast Food{% endblock %}
+
+{% block content %}
+<section class="home-section" id="home">
+    <div class="home-content">
+        <h1 class="fade-in">
+            Tốc độ dẫn đầu,<br />
+            hương vị dài lâu
+        </h1>
+        <div class="home-links fade-in">
+            <a href="#products" class="btn-main">Mua Ngay <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    </div>
+</section>
+
+<section class="bg-shop" id="products">
+    <div class="container">
+        <div class="shop-header-flex">
+            <div class="section-title">
+                <h2>Thực đơn hôm nay</h2>
+                <div class="title-line"></div>
+            </div>
+
+            <div class="categories-list">
+                <a href="#" class="category-badge active">Tất Cả</a>
+                <a href="#" class="category-badge">Burger</a>
+                <a href="#" class="category-badge">Gà Rán</a>
+                <a href="#" class="category-badge">Pizza</a>
+                <a href="#" class="category-badge">Đồ Uống</a>
+            </div>
+        </div>
+
+        <div class="filter-search-container">
+            <form class="search-box">
+                <input type="text" placeholder="Tìm tên món, hương vị...">
+                <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+
+            <div class="filter-group">
+                <label>Sắp xếp:</label>
+                <select id="sort">
+                    <option value="newest">Mới Nhất</option>
+                    <option value="price-low">Giá: Thấp -> Cao</option>
+                    <option value="price-high">Giá: Cao -> Thấp</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="products-grid" id="products-grid">
+            <div class="product-card">
+                <div class="product-image" onclick="openProductModal('Burger Bò Phô Mai', 55000, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1899&auto=format&fit=crop', 'Thịt bò nướng lửa hồng kết hợp phô mai tan chảy và rau tươi.')">
+                    <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1899&auto=format&fit=crop" alt="Burger">
+                    <span class="stock-badge">Còn hàng</span>
+                </div>
+                <div class="product-details">
+                    <div class="top-row">
+                        <h3 class="name" onclick="openProductModal('Burger Bò Phô Mai', 55000, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1899&auto=format&fit=crop', 'Thịt bò nướng lửa hồng kết hợp phô mai tan chảy và rau tươi.')">Burger Bò Phô Mai</h3>
+                        <div class="rating"><i class="fas fa-star gold"></i> 4.8</div>
+                    </div>
+                    <p class="price">55,000₫</p>
+                    <button class="btn-add-cart" onclick="openProductModal('Burger Bò Phô Mai', 55000, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1899&auto=format&fit=crop', 'Thịt bò nướng lửa hồng kết hợp phô mai tan chảy và rau tươi.')">
+                        <i class="fa-solid fa-cart-plus"></i> Xem tùy chọn
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="pagination-wrapper mt-5">
+    <div class="pagination-container" id="pagination-controls">
+        <button class="page-nav-btn {% if current_page == 1 %}disabled{% endif %}" id="prev-btn">
+            Trang trước
+        </button>
+
+        <div class="page-numbers" id="page-numbers-container">
+            {% if total_pages %}
+                {% for i in range(1, total_pages + 1) %}
+                    <button class="page-num {% if i == current_page %}active{% endif %}">{{ i }}</button>
+                {% endfor %}
+            {% else %}
+                <button class="page-num active">1</button>
+            {% endif %}
+        </div>
+
+        <button class="page-nav-btn {% if current_page == total_pages %}disabled{% endif %}" id="next-btn">
+            Trang sau
+        </button>
+    </div>
+
+    <div class="page-indicator" id="page-info">
+        Trang <span id="current-page-display">{{ current_page | default(1) }}</span> / <span id="total-pages-display">{{ total_pages | default(1) }}</span>
+    </div>
+</div>
+    </div>
+</section>
+
+<div id="productModal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeModal()">&times;</button>
+        <div class="modal-body">
+            <div class="modal-image">
+                <img id="modalImg" src="" alt="Product Image">
+            </div>
+            <div class="modal-info">
+                <h2 id="modalName">Tên món ăn</h2>
+                <p id="modalDesc" class="text-muted"></p>
+                <p class="modal-price" id="modalPrice">0đ</p>
+
+                <div class="option-group">
+                    <label>Chọn kích cỡ:</label>
+                    <div class="size-options">
+                        <input type="radio" name="size" id="sizeS" value="S" checked>
+                        <label for="sizeS">Vừa</label>
+                        <input type="radio" name="size" id="sizeL" value="L">
+                        <label for="sizeL">To (+15k)</label>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <div class="quantity-control">
+                        <button onclick="changeQty(-1)">-</button>
+                        <input type="number" id="modalQty" value="1" min="1" readonly>
+                        <button onclick="changeQty(1)">+</button>
+                    </div>
+                    <button class="btn-confirm-add" onclick="addToCartFromModal()">Thêm vào giỏ hàng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

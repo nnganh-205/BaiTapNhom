@@ -1,0 +1,153 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Quản lý Sản phẩm - InvenStory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 style="font-size: 24px; font-weight: 600;">Sản phẩm</h1>
+    <div class="actions">
+        <button class="btn btn-upload"><i class="fa-solid fa-upload"></i> Tải lên</button>
+        <button id="btnAddProduct" class="btn btn-add">
+            <i class="fa-solid fa-plus"></i> Thêm sản phẩm
+        </button>
+    </div>
+</div>
+
+<div class="data-card" style="padding: 20px; margin-bottom: 24px; background: #f8fafc;">
+    <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+        <input type="text" placeholder="Tên sản phẩm, mã SKU..." style="flex: 1; min-width: 250px;">
+
+        <span style="font-size: 13px; color: var(--text-muted);">Sắp xếp:</span>
+        <select>
+            <option value="name">Tên sản phẩm</option>
+            <option value="price">Giá bán</option>
+            <option value="stock">Số lượng tồn</option>
+        </select>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <label style="font-size: 14px;"><input type="radio" name="order" checked> ↑</label>
+            <label style="font-size: 14px;"><input type="radio" name="order"> ↓</label>
+        </div>
+        <button class="btn btn-upload" style="background: #334155; color: white; border: none;">Áp dụng</button>
+    </div>
+
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 13px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Danh mục:</span>
+            <select>
+                <option value="all">Tất cả</option>
+                <option value="sua">Các loại sữa</option>
+                <option value="nuoc">Đồ uống</option>
+            </select>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Giá:</span>
+            <input type="number" placeholder="Từ" style="width: 90px;">
+            <input type="number" placeholder="Đến" style="width: 90px;">
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Tồn kho:</span>
+            <input type="number" placeholder="0" style="width: 70px;">
+            <span>-</span>
+            <input type="number" placeholder="999" style="width: 70px;">
+        </div>
+
+        <button class="btn btn-add-filter" style="padding: 8px 16px;">Lọc</button>
+        <button class="btn btn-upload" style="padding: 8px 16px;">Bỏ lọc</button>
+    </div>
+</div>
+
+<div class="data-card">
+    <table>
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Ảnh</th>
+                <th>Tên sản phẩm</th>
+                <th>Danh mục</th>
+                <th>Đơn vị</th>
+                <th>Đơn giá</th>
+                <th>Tồn kho</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="8" class="empty-state">
+                    <i class="fa-solid fa-box-open"></i>
+                    <p>Chưa có sản phẩm nào. Vui lòng kết nối Database hoặc thêm mới.</p>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div id="addProductModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-plus-circle"></i> Thêm sản phẩm mới</h2>
+            <button class="close-modal" onclick="toggleModal()">&times;</button>
+        </div>
+
+        <form id="addProductForm" action="/admin/add-product" method="POST" enctype="multipart/form-data">
+            <div class="form-grid">
+                <div class="form-left">
+                    <div class="input-group">
+                        <label>Tên sản phẩm</label>
+                        <input type="text" name="ten_mon" placeholder="Ví dụ: Burger Bò Đặc Biệt" required>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Mã SKU</label>
+                            <input type="text" name="ma_sku" placeholder="BG-001" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Danh mục</label>
+                            <select name="id_danh_muc" required>
+                                <option value="">-- Chọn danh mục --</option>
+                                <option value="1">Burger</option>
+                                <option value="2">Đồ uống</option>
+                                <option value="3">Mỳ Ý</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Mô tả định lượng</label>
+                        <textarea name="mo_ta" rows="3" placeholder="Ví dụ: 200g bò Úc..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-right">
+                    <div class="input-group">
+                        <label>Hình ảnh món ăn</label>
+                        <div class="image-upload-wrapper">
+                            <input type="file" name="anh_san_pham" id="imageInput" accept="image/*" onchange="previewImage(this)" required>
+                            <div id="imagePreview" class="preview-box">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span>Chọn ảnh từ máy tính</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Giá bán (VNĐ)</label>
+                            <input type="number" name="gia" placeholder="0" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Tồn kho</label>
+                            <input type="number" name="ton_kho" value="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="toggleModal()">Hủy bỏ</button>
+                <button type="submit" class="btn-submit">Lưu sản phẩm</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Quản lý Đơn hàng - InvenStory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 style="font-size: 24px; font-weight: 600;">Đơn hàng</h1>
+    <div class="actions">
+        <button class="btn btn-add">
+            <i class="fa-solid fa-plus"></i> Tạo đơn mới
+        </button>
+    </div>
+</div>
+
+<div class="data-card" style="padding: 20px; margin-bottom: 24px; background: #f8fafc;">
+    <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+        <input type="text" placeholder="Tìm tên khách, mã đơn..." style="flex: 1; min-width: 250px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+
+        <span class="badge" style="background: #e2e8f0; color: #475569;">Sắp xếp:</span>
+        <select style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <option value="date">Ngày tạo</option>
+            <option value="total">Tổng tiền</option>
+        </select>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <label><input type="radio" name="order" checked> ↑</label>
+            <label><input type="radio" name="order"> ↓</label>
+        </div>
+        <button class="btn btn-upload" style="background: #334155; color: white; border: none;">Áp dụng</button>
+    </div>
+
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 14px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Ngày:</span>
+            <input type="date" style="padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
+            <span>-</span>
+            <input type="date" style="padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Tiền:</span>
+            <input type="number" placeholder="Từ" style="width: 80px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
+            <input type="number" placeholder="Đến" style="width: 80px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
+        </div>
+
+        <button class="btn btn-add" style="padding: 8px 20px;">Lọc dữ liệu</button>
+        <button class="btn btn-upload">Xóa lọc</button>
+    </div>
+</div>
+
+<div class="data-card">
+    <table>
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Mã đơn</th>
+                <th>Khách hàng</th>
+                <th>Số SP</th>
+                <th>Tổng tiền</th>
+                <th>Ngày tạo</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="8" class="empty-state">
+                    <i class="fa-solid fa-cart-flatbed"></i>
+                    <p>Đang chờ kết nối dữ liệu đơn hàng...</p>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
