@@ -129,7 +129,7 @@ INSERT INTO products (sku, category_id, name, description, image_url, is_availab
 ('PZ-002', 1, 'Pizza BBQ Gà & Nấm', 'Ức gà nướng BBQ + nấm portobello xào bơ tỏi + hành tây caramelized, mozzarella kéo sợi và sốt BBQ smoky', 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
 ('PZ-003', 1, 'Pizza Hải Sản Tổng Hợp', 'Tôm sú, mực ống, ngao, crab stick tươi trên sốt cream cà chua, mozzarella và rắc parmesan + ngò tây', 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
 ('PZ-004', 1, 'Pizza Pepperoni Cay', 'Xúc xích pepperoni nhập Mỹ, sốt cà chua cay, mozzarella và ớt chuông xanh đỏ – vị đậm đà mạnh miệng', 'https://images.unsplash.com/photo-1628840042765-356cda07504e?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
-('PZ-005', 1, 'Pizza Phô Mai 4 Loại', 'Mozzarella + Cheddar + Gorgonzola + Parmesan trên nền sốt béchamel – thiên đường của người yêu phô mai', 'https://images.unsplash.com/photo-1571407970349-bc81e73b27b4?q=80&w=800&auto=format&fit=crop', 1, '2024-09-01 ₀₈:₀₀:₀₀'),
+('PZ-005', 1, 'Pizza Phô Mai 4 Loại', 'Mozzarella + Cheddar + Gorgonzola + Parmesan trên nền sốt béchamel – thiên đường của người yêu phô mai', 'https://images.unsplash.com/photo-1593504049359-74330189a345?q=80&w=800&auto=format&fit=crop', 1, '2024-09-01 ₀₈:₀₀:₀₀'),
 
 -- BURGER (category_id = 2 | product_id 6–9) -------------------
 ('BG-001', 2, 'Burger Bò Phô Mai', '180g patty bò Úc xay thủ công, cheddar tan chảy, dưa chuột muối, xà lách, sốt burger đặc trưng của quán', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
@@ -138,40 +138,40 @@ INSERT INTO products (sku, category_id, name, description, image_url, is_availab
 ('BG-004', 2, 'Burger Nấm Truffle', 'Patty bò phết truffle butter, nấm portobello áp chảo, arugula, phô mai gruyère và mayo truffle cao cấp', 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?q=80&w=800&auto=format&fit=crop', 1, '2024-10-01 08:00:00'),
 
 -- PASTA (category_id = 3 | product_id 10–13) ------------------
-('PA-001', 3, 'Pasta Carbonara', 'Spaghetti De Cecco #5, pancetta xông khói, trứng lòng đào, pecorino Romano – carbonara kiểu Roma, không dùng kem', 'https://images.unsplash.com/photo-1612874742237-6450113ba049?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
+('PA-001', 3, 'Pasta Carbonara', 'Spaghetti De Cecco #5, pancetta xông khói, trứng lòng đào, pecorino Romano – carbonara kiểu Roma, không dùng kem', 'https://images.unsplash.com/photo-1588013273468-315fd88ea34c?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
 ('PA-002', 3, 'Pasta Bolognese', 'Tagliatelle tươi, sốt bò bằm hầm 3 tiếng với vang đỏ + cà chua pelati + rau thơm, ăn kèm parmesan bào', 'https://images.unsplash.com/photo-1598866594230-a7c12756260f?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
 ('PA-003', 3, 'Pasta Aglio e Olio Tôm', 'Spaghetti xào tỏi dầu olive, tôm sú tươi, ớt khô Calabria, lá mùi tây – đơn giản mà đậm đà kiểu Naples', 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
-('PA-004', 3, 'Pasta Kem Nấm Hương', 'Fettuccine sốt kem Pháp, nấm hương Nhật thái lát, tỏi, hành tây, parmesan bào – béo ngậy thơm nồng', 'https://images.unsplash.com/photo-1621996311228-7fa0ebc1975e?q=80&w=800&auto=format&fit=crop', 1, '2024-09-01 08:00:00'),
+('PA-004', 3, 'Pasta Kem Nấm Hương', 'Fettuccine sốt kem Pháp, nấm hương Nhật thái lát, tỏi, hành tây, parmesan bào – béo ngậy thơm nồng', 'https://images.unsplash.com/photo-1550431221-6f1495d56cf3?q=80&w=800&auto=format&fit=crop', 1, '2024-09-01 08:00:00'),
 
 -- GÀ RÁN (category_id = 4 | product_id 14–17) -----------------
 ('GA-001', 4, 'Gà Rán Giòn Kiểu Mỹ', 'Gà tươi tẩm hỗn hợp 11 loại gia vị bí truyền, chiên ngập dầu 170°C cho vỏ giòn vàng ươm, thịt mọng nước', 'https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
-('GA-002', 4, 'Gà Rán Cay Hàn Quốc', 'Gà chiên giòn phủ sốt gochujang + mật ong + tỏi băm, rắc mè rang – cay ngọt chuẩn vị yangnyeom Korean', 'https://images.unsplash.com/photo-1587595431973-3f41052ce3d3?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
-('GA-003', 4, 'Cốt Lết Gà Nướng Sả', 'Cốt lết gà ướp sả + gừng + nước mắm ngon, nướng than hoa – ăn kèm cơm trắng hoặc salad rau xanh tươi', 'https://images.unsplash.com/photo-1598514982205-fbaa9dcbdc69?q=80&w=800&auto=format&fit=crop', 1, '2024-09-15 08:00:00'),
-('GA-004', 4, 'Cánh Gà Sốt Buffalo', 'Cánh gà chiên giòn phủ sốt buffalo cay nồng + bơ + giấm táo Mỹ, ăn kèm bleu cheese dip và cần tây', 'https://images.unsplash.com/photo-1608039755473-39211f4229b4?q=80&w=800&auto=format&fit=crop', 1, '2024-09-15 08:00:00'),
+('GA-002', 4, 'Gà Rán Cay Hàn Quốc', 'Gà chiên giòn phủ sốt gochujang + mật ong + tỏi băm, rắc mè rang – cay ngọt chuẩn vị yangnyeom Korean', 'https://images.unsplash.com/photo-1727280376746-b89107a5b0df?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
+('GA-003', 4, 'Cốt Lết Gà Nướng Sả', 'Cốt lết gà ướp sả + gừng + nước mắm ngon, nướng than hoa – ăn kèm cơm trắng hoặc salad rau xanh tươi', 'https://images.unsplash.com/photo-1749126740551-f69b65307918?q=80&w=800&auto=format&fit=crop', 1, '2024-09-15 08:00:00'),
+('GA-004', 4, 'Cánh Gà Sốt Buffalo', 'Cánh gà chiên giòn phủ sốt buffalo cay nồng + bơ + giấm táo Mỹ, ăn kèm bleu cheese dip và cần tây', 'https://images.unsplash.com/photo-1617908484787-b52cc0ce5c9a?q=80&w=800&auto=format&fit=crop', 1, '2024-09-15 08:00:00'),
 
 -- ĐỒ UỐNG (category_id = 5 | product_id 18–22) ----------------
-('DU-001', 5, 'Nước Ngọt Có Gas', 'Pepsi / 7UP / Mirinda cam tùy chọn – lon 330ml hoặc ly đá đầy, uống kèm bữa ăn giảm cảm giác ngán', 'https://images.unsplash.com/photo-1622483767028-fd16753ce391?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
+('DU-001', 5, 'Nước Ngọt Có Gas', 'Pepsi / 7UP / Mirinda cam tùy chọn – lon 330ml hoặc ly đá đầy, uống kèm bữa ăn giảm cảm giác ngán', 'https://images.unsplash.com/photo-1649930302517-a06774ae4d3f?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
 ('DU-002', 5, 'Nước Cam Vắt Tươi', '3–4 trái cam Vinh vắt tại chỗ, không thêm đường hay nước – vitamin C tự nhiên, uống trong 15 phút', 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
 ('DU-003', 5, 'Trà Đào Cam Sả', 'Oolong ủ lạnh + đào ngâm đường + cam tươi + lá sả + hạt chia, đá viên – thức uống hè bán chạy nhất', 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
-('DU-004', 5, 'Sinh Tố Bơ Mật Ong', 'Bơ Đắk Lắk chín mềm + sữa tươi Vinamilk không đường + mật ong rừng Tây Nguyên – xay đặc, không pha loãng', 'https://images.unsplash.com/photo-1622241740925-fb3d67963283?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
-('DU-005', 5, 'Cà Phê Đen Đá', 'Robusta Cầu Đất phin đậm, rót qua đá viên – vị đắng nồng đặc trưng người Hà Nội, tỉnh ngủ tức thì', 'https://images.unsplash.com/photo-1517701550927-30cf0ba29d82?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
+('DU-004', 5, 'Sinh Tố Bơ Mật Ong', 'Bơ Đắk Lắk chín mềm + sữa tươi Vinamilk không đường + mật ong rừng Tây Nguyên – xay đặc, không pha loãng', 'https://images.unsplash.com/photo-1768723228817-7902ab347f5d?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
+('DU-005', 5, 'Cà Phê Đen Đá', 'Robusta Cầu Đất phin đậm, rót qua đá viên – vị đắng nồng đặc trưng người Hà Nội, tỉnh ngủ tức thì', 'https://images.unsplash.com/photo-1652779989512-8653432e93c5?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
 
 -- TRÁNG MIỆNG (category_id = 6 | product_id 23–26) ------------
-('TD-001', 6, 'Kem Vani Soft Serve', 'Kem mềm soft serve, sữa Nhật ít đường, cuộn ốc quế giòn – ăn ngay kẻo chảy, best seller mùa hè', 'https://images.unsplash.com/photo-1563805042-7684c8f9e412?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
-('TD-002', 6, 'Bánh Tiramisu', 'Mascarpone Galbani + ladyfinger ngâm espresso đậm + cacao Valrhona rắc dày – không dùng rượu, hợp mọi tuổi', 'https://images.unsplash.com/photo-1571115177098-24edf2f11f9f?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
+('TD-001', 6, 'Kem Vani Soft Serve', 'Kem mềm soft serve, sữa Nhật ít đường, cuộn ốc quế giòn – ăn ngay kẻo chảy, best seller mùa hè', 'https://images.unsplash.com/photo-1759108755681-84b63b97a7af?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
+('TD-002', 6, 'Bánh Tiramisu', 'Mascarpone Galbani + ladyfinger ngâm espresso đậm + cacao Valrhona rắc dày – không dùng rượu, hợp mọi tuổi', 'https://images.unsplash.com/photo-1740782440952-cecf53abe574?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
 ('TD-003', 6, 'Chocolate Lava Cake', 'Vỏ ngoài xốp mềm, cắt ra lòng chocolate đen 70% chảy ra – ăn nóng kèm kem vani là đỉnh cao cuộc đời', 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?q=80&w=800&auto=format&fit=crop', 1, '2024-10-01 08:00:00'),
-('TD-004', 6, 'Pudding Caramel Flan', 'Flan kiểu Pháp nướng bain-marie, caramel đắng nhẹ – lạnh mát mịn màng, no cũng không ngán', 'https://images.unsplash.com/photo-1501443762994-6e1bebd037c8?q=80&w=800&auto=format&fit=crop', 1, '2024-10-01 08:00:00'),
+('TD-004', 6, 'Pudding Caramel Flan', 'Flan kiểu Pháp nướng bain-marie, caramel đắng nhẹ – lạnh mát mịn màng, no cũng không ngán', 'https://images.unsplash.com/photo-1532556660262-1c45d5fae825?q=80&w=800&auto=format&fit=crop', 1, '2024-10-01 08:00:00'),
 
 -- ĐỒ ĂN NHẸ (category_id = 7 | product_id 27–30) -------------
 ('DN-001', 7, 'Khoai Tây Chiên Giòn', 'Khoai tây cắt que chiên ngập dầu, lắc muối biển + paprika, ăn kèm tương cà và sốt phô mai cheddar tự làm', 'https://images.unsplash.com/photo-1576107232684-1279f390859f?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
 ('DN-002', 7, 'Mozzarella Sticks', 'Phô mai mozzarella cắt que, tẩm bột breadcrumb chiên vàng, kéo sợi cực đỉnh – ăn kèm sốt marinara', 'https://images.unsplash.com/photo-1536510233921-8e5043fce771?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
-('DN-003', 7, 'Salad Caesar Gà Nướng', 'Rau romaine + ức gà nướng thái lát + crouton nướng bơ tỏi + parmesan bào + sốt Caesar tự làm', 'https://images.unsplash.com/photo-1550304943-4f24f54bfde9?q=80&w=800&auto=format&fit=crop', 1, '2024-09-01 08:00:00'),
-('DN-004', 7, 'Cánh Gà Chiên Giòn', 'Cánh gà tươi tẩm gia vị chiên giòn – vỏ ngoài giòn rụm, thịt mềm bên trong, ăn kèm tương ớt ngọt Thái', 'https://images.unsplash.com/photo-1567620832968-ebbc7b4b1a80?q=80&w=800&auto=format&fit=crop', 1, '2024-09-01 08:00:00'),
+('DN-003', 7, 'Salad Caesar Gà Nướng', 'Rau romaine + ức gà nướng thái lát + crouton nướng bơ tỏi + parmesan bào + sốt Caesar tự làm', 'https://images.unsplash.com/photo-1522251253478-4cae03d93949?q=80&w=800&auto=format&fit=crop', 1, '2024-09-01 08:00:00'),
+('DN-004', 7, 'Cánh Gà Chiên Giòn', 'Cánh gà tươi tẩm gia vị chiên giòn – vỏ ngoài giòn rụm, thịt mềm bên trong, ăn kèm tương ớt ngọt Thái', 'https://images.unsplash.com/photo-1617908484787-b52cc0ce5c9a?q=80&w=800&auto=format&fit=crop', 1, '2024-09-01 08:00:00'),
 
 -- COMBO (category_id = 8 | product_id 31–33) ------------------
-('CB-001', 8, 'Combo Gia Đình', '1 pizza L + 2 phần gà rán 5 miếng + 4 nước ngọt + 2 khoai tây vừa – tiết kiệm ~20% so với gọi lẻ', 'https://images.unsplash.com/photo-1615719413546-5078c1871a25?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
-('CB-002', 8, 'Combo Đôi', '1 burger bò + 1 burger gà + 2 nước uống tùy chọn + 1 khoai tây vừa – tiết kiệm ~15%', 'https://images.unsplash.com/photo-1594212848118-eec32eb04b8b?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
-('CB-003', 8, 'Combo Học Sinh', '1 burger gà + 1 khoai tây nhỏ + 1 nước ngọt S – vừa túi tiền, đủ no cho bữa xế chiều', 'https://images.unsplash.com/photo-1610440042744-f8b89417efc6?q=80&w=800&auto=format&fit=crop', 1, '2024-09-01 08:00:00');
+('CB-001', 8, 'Combo Gia Đình', '1 pizza L + 2 phần gà rán 5 miếng + 4 nước ngọt + 2 khoai tây vừa – tiết kiệm ~20% so với gọi lẻ', 'https://images.unsplash.com/photo-1635126039215-ec4d113917fd?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
+('CB-002', 8, 'Combo Đôi', '1 burger bò + 1 burger gà + 2 nước uống tùy chọn + 1 khoai tây vừa – tiết kiệm ~15%', 'https://images.unsplash.com/photo-1635126039215-ec4d113917fd?q=80&w=800&auto=format&fit=crop', 1, '2024-08-10 08:00:00'),
+('CB-003', 8, 'Combo Học Sinh', '1 burger gà + 1 khoai tây nhỏ + 1 nước ngọt S – vừa túi tiền, đủ no cho bữa xế chiều', 'https://images.unsplash.com/photo-1481070555726-e2fe8357725c?q=80&w=800&auto=format&fit=crop', 1, '2024-09-01 08:00:00');
 
 -- ================================================================
 -- 4. PRODUCT_VARIANTS  (73 biến thể)
