@@ -1,9 +1,9 @@
-{% extends "admin/layout.html" %}
+{% extends "admin/base.html" %}
 
 {% block title %}Báo cáo doanh thu - InvenStory{% endblock %}
 
 {% block head %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -92,5 +92,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
 {% endblock %}

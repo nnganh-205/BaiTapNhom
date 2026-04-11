@@ -1,4 +1,4 @@
-{% extends "admin/layout.html" %}
+{% extends "admin/base.html" %}
 
 {% block title %}Quản lý Đơn hàng - InvenStory{% endblock %}
 
@@ -14,7 +14,8 @@
 
 <div class="data-card" style="padding: 20px; margin-bottom: 24px; background: #f8fafc;">
     <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
-        <input type="text" placeholder="Tìm tên khách, mã đơn..." style="flex: 1; min-width: 250px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <input type="text" placeholder="Tìm tên khách, mã đơn..."
+            style="flex: 1; min-width: 250px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
 
         <span class="badge" style="background: #e2e8f0; color: #475569;">Sắp xếp:</span>
         <select style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
@@ -39,8 +40,10 @@
 
         <div style="display: flex; align-items: center; gap: 8px;">
             <span>Tiền:</span>
-            <input type="number" placeholder="Từ" style="width: 80px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
-            <input type="number" placeholder="Đến" style="width: 80px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
+            <input type="number" placeholder="Từ"
+                style="width: 80px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
+            <input type="number" placeholder="Đến"
+                style="width: 80px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
         </div>
 
         <button class="btn btn-add" style="padding: 8px 20px;">Lọc dữ liệu</button>

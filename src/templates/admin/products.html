@@ -1,4 +1,4 @@
-{% extends "admin/layout.html" %}
+{% extends "admin/base.html" %}
 
 {% block title %}Quản lý Sản phẩm - InvenStory{% endblock %}
 
@@ -123,7 +123,8 @@
                     <div class="input-group">
                         <label>Hình ảnh món ăn</label>
                         <div class="image-upload-wrapper">
-                            <input type="file" name="anh_san_pham" id="imageInput" accept="image/*" onchange="previewImage(this)" required>
+                            <input type="file" name="anh_san_pham" id="imageInput" accept="image/*"
+                                onchange="previewImage(this)" required>
                             <div id="imagePreview" class="preview-box">
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
                                 <span>Chọn ảnh từ máy tính</span>
