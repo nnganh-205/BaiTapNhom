@@ -6,56 +6,9 @@
 <div class="page-header">
     <h1 style="font-size: 24px; font-weight: 600;">Sản phẩm</h1>
     <div class="actions">
-        <button class="btn btn-upload"><i class="fa-solid fa-upload"></i> Tải lên</button>
-        <button id="btnAddProduct" class="btn btn-add">
+        <button id="btnAddProduct" class="btn btn-add" onclick="toggleAdminModal()">
             <i class="fa-solid fa-plus"></i> Thêm sản phẩm
         </button>
-    </div>
-</div>
-
-<div class="data-card" style="padding: 20px; margin-bottom: 24px; background: #f8fafc;">
-    <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
-        <input type="text" placeholder="Tên sản phẩm, mã SKU..." style="flex: 1; min-width: 250px;">
-
-        <span style="font-size: 13px; color: var(--text-muted);">Sắp xếp:</span>
-        <select>
-            <option value="name">Tên sản phẩm</option>
-            <option value="price">Giá bán</option>
-            <option value="stock">Số lượng tồn</option>
-        </select>
-
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <label style="font-size: 14px;"><input type="radio" name="order" checked> ↑</label>
-            <label style="font-size: 14px;"><input type="radio" name="order"> ↓</label>
-        </div>
-        <button class="btn btn-upload" style="background: #334155; color: white; border: none;">Áp dụng</button>
-    </div>
-
-    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 13px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span>Danh mục:</span>
-            <select>
-                <option value="all">Tất cả</option>
-                <option value="sua">Các loại sữa</option>
-                <option value="nuoc">Đồ uống</option>
-            </select>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span>Giá:</span>
-            <input type="number" placeholder="Từ" style="width: 90px;">
-            <input type="number" placeholder="Đến" style="width: 90px;">
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span>Tồn kho:</span>
-            <input type="number" placeholder="0" style="width: 70px;">
-            <span>-</span>
-            <input type="number" placeholder="999" style="width: 70px;">
-        </div>
-
-        <button class="btn btn-add-filter" style="padding: 8px 16px;">Lọc</button>
-        <button class="btn btn-upload" style="padding: 8px 16px;">Bỏ lọc</button>
     </div>
 </div>
 
@@ -67,74 +20,151 @@
                 <th>Ảnh</th>
                 <th>Tên sản phẩm</th>
                 <th>Danh mục</th>
-                <th>Đơn vị</th>
-                <th>Đơn giá</th>
+                <th>Giá bán</th>
                 <th>Tồn kho</th>
-                <th>Thao tác</th>
+                <th style="text-align: right;">Thao tác</th>
             </tr>
         </thead>
-        <tbody>
-            <tr>
-                <td colspan="8" class="empty-state">
-                    <i class="fa-solid fa-box-open"></i>
-                    <p>Chưa có sản phẩm nào. Vui lòng kết nối Database hoặc thêm mới.</p>
+        <tbody id="productTable">
+
+            {% for product in products %}
+            {% set variant = product.variants[0] if product.variants else None %}
+
+            <tr id="product-row-{{ product.id }}">
+                <td>{{ loop.index }}</td>
+                <td>
+                    {% if product.image_url %}
+                    <img src="{{ product.image_url }}" alt="Ảnh"
+                        style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">
+                    {% else %}
+                    <div
+                        style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-image text-muted"></i>
+                    </div>
+                    {% endif %}
+                </td>
+                <td>
+                    <b>{{ product.name }}</b>
+                    <div class="text-content-truncate" style="font-size: 12px;">SKU: {{ product.sku }}</div>
+                </td>
+                <td>{{ product.category.name if product.category else 'Chưa có' }}</td>
+
+                <td style="color: var(--danger); font-weight: 600;">
+                    {{ "{:,.0f}".format(variant.price) if variant else '0' }} đ
+                </td>
+
+                <td>{{ variant.stock if variant else 0 }}</td>
+
+                <td style="text-align: right;">
+                    <button class="btn text-danger" style="padding: 6px 10px; background: transparent;"
+                        onclick="deleteProduct({{ product.id }})">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
                 </td>
             </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="empty-state">
+                    <i class="fa-solid fa-box-open"></i>
+                    <p>Chưa có sản phẩm nào. Vui lòng thêm mới.</p>
+                </td>
+            </tr>
+            {% endfor %}
+
         </tbody>
     </table>
 </div>
+<div class="pagination-wrapper"
+    style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 30px; gap: 8px;">
 
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.admin_products', page=pagination.prev_num) }}" class="btn btn-upload"
+        style="padding: 8px 12px;">
+        <i class="fa-solid fa-chevron-left"></i> Trước
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="padding: 8px 12px; opacity: 0.5; cursor: not-allowed;" disabled>
+        <i class="fa-solid fa-chevron-left"></i> Trước
+    </button>
+    {% endif %}
+
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if page_num %}
+    {% if pagination.page == page_num %}
+    <button class="btn btn-add" style="padding: 8px 14px; font-weight: bold;">{{ page_num }}</button>
+    {% else %}
+    <a href="{{ url_for('admin.admin_products', page=page_num) }}" class="btn btn-upload" style="padding: 8px 14px;">{{
+        page_num }}</a>
+    {% endif %}
+    {% else %}
+    <span style="color: var(--text-muted); padding: 0 5px;">...</span>
+    {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.admin_products', page=pagination.next_num) }}" class="btn btn-upload"
+        style="padding: 8px 12px;">
+        Sau <i class="fa-solid fa-chevron-right"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="padding: 8px 12px; opacity: 0.5; cursor: not-allowed;" disabled>
+        Sau <i class="fa-solid fa-chevron-right"></i>
+    </button>
+    {% endif %}
+
+</div>
 <div id="addProductModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
             <h2><i class="fa-solid fa-plus-circle"></i> Thêm sản phẩm mới</h2>
-            <button class="close-modal" onclick="toggleModal()">&times;</button>
+            <button class="close-modal" onclick="toggleAdminModal()">&times;</button>
         </div>
 
-        <form id="addProductForm" action="/admin/add-product" method="POST" enctype="multipart/form-data">
+        <form action="/admin/add-product" method="POST" enctype="multipart/form-data">
             <div class="form-grid">
                 <div class="form-left">
                     <div class="input-group">
                         <label>Tên sản phẩm</label>
-                        <input type="text" name="ten_mon" placeholder="Ví dụ: Burger Bò Đặc Biệt" required>
+                        <input type="text" name="ten_mon" required>
                     </div>
                     <div class="input-row">
                         <div class="input-group">
                             <label>Mã SKU</label>
-                            <input type="text" name="ma_sku" placeholder="BG-001" required>
+                            <input type="text" name="ma_sku" required>
                         </div>
                         <div class="input-group">
                             <label>Danh mục</label>
                             <select name="id_danh_muc" required>
                                 <option value="">-- Chọn danh mục --</option>
-                                <option value="1">Burger</option>
-                                <option value="2">Đồ uống</option>
-                                <option value="3">Mỳ Ý</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
                     <div class="input-group">
-                        <label>Mô tả định lượng</label>
-                        <textarea name="mo_ta" rows="3" placeholder="Ví dụ: 200g bò Úc..."></textarea>
+                        <label>Mô tả</label>
+                        <textarea name="mo_ta" rows="3"></textarea>
                     </div>
                 </div>
 
                 <div class="form-right">
                     <div class="input-group">
-                        <label>Hình ảnh món ăn</label>
-                        <div class="image-upload-wrapper">
+                        <label>Hình ảnh</label>
+                        <div class="image-upload-wrapper" style="position: relative;">
                             <input type="file" name="anh_san_pham" id="imageInput" accept="image/*"
-                                onchange="previewImage(this)" required>
-                            <div id="imagePreview" class="preview-box">
+                                onchange="previewImage(this)" required
+                                style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer;">
+                            <div id="imagePreview" class="preview-box" style="pointer-events: none;">
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
-                                <span>Chọn ảnh từ máy tính</span>
+                                <span>Nhấn để chọn ảnh</span>
                             </div>
                         </div>
                     </div>
                     <div class="input-row">
                         <div class="input-group">
                             <label>Giá bán (VNĐ)</label>
-                            <input type="number" name="gia" placeholder="0" required>
+                            <input type="number" name="gia" required>
                         </div>
                         <div class="input-group">
                             <label>Tồn kho</label>
@@ -143,12 +173,50 @@
                     </div>
                 </div>
             </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn-cancel" onclick="toggleModal()">Hủy bỏ</button>
-                <button type="submit" class="btn-submit">Lưu sản phẩm</button>
+            <div class="modal-footer" style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn btn-upload" onclick="toggleAdminModal()">Hủy bỏ</button>
+                <button type="submit" class="btn btn-add">Lưu sản phẩm</button>
             </div>
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleAdminModal() {
+        const modal = document.getElementById('addProductModal');
+        if (modal) {
+            modal.classList.toggle('show');
+        }
+    }
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('imagePreview').innerHTML =
+                    '<img src="' + e.target.result + '" style="width: 100%; height: 180px; object-fit: cover; border-radius: 10px;">';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function deleteProduct(productId) {
+        if (confirm("Xóa sản phẩm này sẽ xóa luôn cả lịch sử trong giỏ hàng. Bạn có chắc không?")) {
+            fetch(`/admin/delete-product/${productId}`, {
+                method: 'POST',
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        document.getElementById(`product-row-${productId}`).remove();
+                    } else {
+                        alert("Lỗi: " + data.message);
+                    }
+                });
+        }
+    }
+</script>
 {% endblock %}

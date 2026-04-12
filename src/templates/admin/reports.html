@@ -9,48 +9,34 @@
 {% block content %}
 <div class="page-header">
     <h1 class="report-title">Báo cáo doanh thu</h1>
-    <div class="header-actions">
-        <select class="report-select">
-            <option>Tùy chọn</option>
-        </select>
-        <button class="btn btn-upload">
-            <i class="fa-regular fa-calendar-days"></i> Chọn thời gian
-        </button>
-        <button class="btn btn-add">
-            <i class="fa-solid fa-magnifying-glass"></i> Xem báo cáo
-        </button>
-    </div>
+
 </div>
 
 <div class="stats-grid">
     <div class="data-card stat-card">
-        <h2>0đ</h2>
-        <p>Doanh thu kỳ này</p>
+        <h2 style="color: var(--primary);">{{ "{:,.0f}".format(dt_nay) }} đ</h2>
+        <p>Doanh thu tháng này</p>
     </div>
     <div class="data-card stat-card">
-        <h2>0đ</h2>
-        <p>Doanh thu kỳ trước</p>
+        <h2>{{ "{:,.0f}".format(dt_truoc) }} đ</h2>
+        <p>Doanh thu tháng trước</p>
     </div>
     <div class="data-card stat-card">
-        <h2 class="text-muted">-- %</h2>
+        <h2 class="{% if tang_truong >= 0 %}text-success{% else %}text-danger{% endif %}">
+            {% if tang_truong > 0 %}+{% endif %}{{ tang_truong }} %
+        </h2>
         <p>Tỉ lệ tăng trưởng</p>
     </div>
 </div>
 
 <div class="data-card chart-container">
     <div class="chart-header">
-        <h4 class="card-title">So sánh cùng kỳ</h4>
-        <div class="chart-legend">
-            <span class="legend-item current"><span class="line"></span> Kỳ này</span>
-            <span class="legend-item previous"><span class="line dashed"></span> Kỳ trước</span>
-        </div>
+        <h4 class="card-title">Biểu đồ doanh thu năm nay</h4>
     </div>
     <div class="chart-wrapper">
         <canvas id="revenueChart"></canvas>
-        <div class="empty-state-overlay">
-            <i class="fa-solid fa-chart-area"></i>
-            <p>Đang chờ dữ liệu phân tích hệ thống...</p>
-        </div>
+
+
     </div>
 </div>
 
@@ -59,32 +45,38 @@
         <div class="report-tab active" data-type="product">
             <span>Doanh thu theo sản phẩm</span>
         </div>
-        <div class="report-tab" data-type="category">
-            <span>Doanh thu theo danh mục</span>
-        </div>
     </div>
 
     <div class="data-card table-card">
         <div class="table-header-reports">
-            <input type="text" id="reportSearch" placeholder="Nhập tên sản phẩm, sku hoặc mã vạch...">
-            <button class="btn btn-add">Tìm kiếm</button>
+            <span id="table-title">Top sản phẩm bán chạy</span>
         </div>
 
         <table class="table-reports">
             <thead>
                 <tr>
-                    <th id="col-name" style="width: 45%;">Tiêu chí</th>
+                    <th id="col-name" style="width: 45%;">Tên sản phẩm</th>
                     <th>Số lượng bán</th>
                     <th>Doanh thu</th>
                 </tr>
             </thead>
             <tbody id="report-tbody">
+
+                {% for sp in list_thong_ke_sp %}
+                <tr>
+                    <td><b>{{ sp.name }}</b></td>
+                    <td>{{ sp.so_luong }}</td>
+                    <td style="color: var(--danger); font-weight: 600;">{{ "{:,.0f}".format(sp.doanh_thu) }} đ</td>
+                </tr>
+                {% else %}
                 <tr>
                     <td colspan="3" class="empty-state">
                         <i class="fa-solid fa-server"></i>
                         <p>Cơ sở dữ liệu thống kê đang trống.</p>
                     </td>
                 </tr>
+                {% endfor %}
+
             </tbody>
         </table>
     </div>
@@ -92,5 +84,41 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+<script>
+    // 1. Ẩn cái bảng overlay trống đi nếu có dữ liệu
+    var chartEmptyState = document.getElementById('chartEmptyState');
+    if (chartEmptyState) {
+        // Tạm thời ẩn nếu cần vẽ biểu đồ
+        // chartEmptyState.style.display = 'none'; 
+    }
+
+    // 2. Lấy dữ liệu mảng (List) từ Python đẩy sang JS an toàn bằng safe filter
+    const rawData = {{ chart_data | safe }};
+
+    // 3. Khởi tạo Chart.js
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    const revenueChart = new Chart(ctx, {
+        type: 'bar', // Dùng biểu đồ cột (Bar) nhìn tiền sẽ sướng hơn biểu đồ đường (Line)
+        data: {
+            labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
+            datasets: [{
+                label: 'Doanh thu (VNĐ)',
+                data: rawData, // Nạp mảng tiền vào đây
+                backgroundColor: 'rgba(59, 130, 246, 0.5)', // Màu primary của ông
+                borderColor: '#3b82f6',
+                borderWidth: 2,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}
