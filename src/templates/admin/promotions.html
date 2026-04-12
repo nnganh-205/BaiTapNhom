@@ -1,0 +1,274 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Quản lý Khuyến mại - InvenStory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 style="font-size: 24px; font-weight: 600;">Khuyến mại</h1>
+    <div class="actions">
+        <button type="button" class="btn btn-add" onclick="toggleAddPromotionModal()">
+            <i class="fa-solid fa-plus"></i> Thêm mới
+        </button>
+    </div>
+</div>
+
+<div class="data-card">
+    <table>
+        <thead>
+            <tr>
+                <th>Mã</th>
+                <th>Tên chương trình</th>
+                <th>Điều kiện</th>
+                <th>Trạng thái</th>
+                <th style="text-align: right;">Cập nhật</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for promo in promotions %}
+            <tr id="promo-row-{{ promo.code }}">
+                <td><b>{{ promo.code }}</b></td>
+                <td>{{ promo.name }}</td>
+                <td>
+                    <div>Tối thiểu: {{ "{:,.0f}".format(promo.min_subtotal or 0) }} đ</div>
+                    {% if promo.discount_amount %}
+                    <div>Giảm: {{ "{:,.0f}".format(promo.discount_amount) }} đ</div>
+                    {% endif %}
+                    {% if promo.discount_percent %}
+                    <div>Giảm: {{ promo.discount_percent }}%</div>
+                    {% endif %}
+                    {% if promo.min_items %}
+                    <div>Tối thiểu món: {{ promo.min_items }}</div>
+                    {% endif %}
+                    {% if promo.time_windows %}
+                    <div>Khung giờ:
+                        {% for w in promo.time_windows %}
+                        {{ w[0] }}-{{ w[1] }}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if promo.enabled %}
+                    <span class="status-badge" style="background: #dcfce7; color: #166534;">Đang bật</span>
+                    {% else %}
+                    <span class="status-badge" style="background: #fee2e2; color: #991b1b;">Tạm tắt</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right; white-space: nowrap;">
+                    <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: flex-end;">
+                        <button type="button" class="btn btn-upload" style="padding: 6px 10px;" title="Sửa mã khuyến mại"
+                            id="promo-edit-btn-{{ loop.index0 }}"
+                            onclick="togglePromotionEditor('{{ loop.index0 }}', true)">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button type="button" class="btn text-danger" style="padding: 6px 10px; background: transparent;"
+                            title="Xóa mã khuyến mại" onclick="deletePromotion('{{ promo.code }}')">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                    <div id="promo-editor-{{ loop.index0 }}" style="display: none; margin-top: 0; vertical-align: middle;">
+                        <form method="post" action="{{ url_for('admin.update_promotion', promo_code=promo.code) }}"
+                            onsubmit="return closePromotionEditorOnSubmit('{{ loop.index0 }}')"
+                            style="display: inline-flex; gap: 8px; align-items: center; flex-wrap: nowrap; justify-content: flex-end; margin-left: 8px;">
+                            <input type="number" name="min_subtotal" value="{{ promo.min_subtotal or 0 }}" placeholder="Min đơn"
+                                style="width: 110px;">
+                            {% if promo.discount_amount is defined %}
+                            <select name="discount_mode" style="width: 95px;">
+                                <option value="amount" {% if promo.discount_mode != 'percent' %}selected{% endif %}>Giảm tiền</option>
+                                <option value="percent" {% if promo.discount_mode == 'percent' %}selected{% endif %}>Giảm %</option>
+                            </select>
+                            <input type="number" name="discount_amount" value="{{ promo.discount_amount or 0 }}"
+                                placeholder="Giảm tiền" style="width: 110px;">
+                            {% endif %}
+                            {% if promo.discount_percent is defined %}
+                            <input type="number" name="discount_percent" value="{{ promo.discount_percent or 0 }}"
+                                placeholder="%" style="width: 80px;">
+                            {% endif %}
+                            {% if promo.min_items is defined %}
+                            <input type="number" name="min_items" value="{{ promo.min_items or 0 }}" placeholder="SL món"
+                                style="width: 90px;">
+                            {% endif %}
+                            {% if promo.min_stock is defined %}
+                            <input type="number" name="min_stock" value="{{ promo.min_stock or 0 }}" placeholder="Tồn kho"
+                                style="width: 90px;">
+                            {% endif %}
+                            {% if promo.time_windows is defined %}
+                            <input type="text" name="time_windows"
+                                value="{% for w in promo.time_windows %}{{ w[0] }}-{{ w[1] }}{% if not loop.last %}, {% endif %}{% endfor %}"
+                                placeholder="9-12,13-15" style="width: 130px;">
+                            {% endif %}
+                            <label style="display: inline-flex; align-items: center; gap: 4px;">
+                                <input type="checkbox" name="enabled" {% if promo.enabled %}checked{% endif %}> Bật
+                            </label>
+                            <button class="btn btn-upload" type="button" style="padding: 7px 12px;"
+                                onclick="togglePromotionEditor('{{ loop.index0 }}', false)">Hủy</button>
+                            <button class="btn btn-add" type="submit" style="padding: 7px 12px;">Lưu</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="empty-state">
+                    <i class="fa-solid fa-ticket"></i>
+                    <p>Chưa có chương trình khuyến mại.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="addPromotionModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 640px;">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-ticket"></i> Thêm khuyến mại mới</h2>
+            <button type="button" class="close-modal" onclick="toggleAddPromotionModal()">&times;</button>
+        </div>
+
+        <form method="post" action="{{ url_for('admin.create_promotion') }}">
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="display:block; margin-bottom: 6px; font-size: 13px; color: #475569;">Mã khuyến mại</label>
+                        <input type="text" name="code" placeholder="VD: NEW10" required style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom: 6px; font-size: 13px; color: #475569;">Loại khuyến mại</label>
+                        <select name="type" id="newPromoType" onchange="toggleNewPromotionFields()" required style="width: 100%;">
+                            <option value="free_ship">Miễn phí ship</option>
+                            <option value="fixed_discount">Giảm cố định</option>
+                            <option value="group_combo">Combo nhóm</option>
+                            <option value="lucky_hour">Khung giờ vàng</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display:block; margin-bottom: 6px; font-size: 13px; color: #475569;">Tên chương trình</label>
+                    <input type="text" name="name" placeholder="VD: Đơn từ 200k giảm 20k" required style="width: 100%;">
+                </div>
+
+                <div>
+                    <label style="display:block; margin-bottom: 6px; font-size: 13px; color: #475569;">Giá trị đơn tối thiểu (VNĐ)</label>
+                    <input type="number" name="min_subtotal" placeholder="VD: 100000" min="0" value="0" required style="width: 100%;">
+                </div>
+
+                <div id="newFieldDiscountAmount" style="display: none;">
+                    <label style="display:block; margin-bottom: 6px; font-size: 13px; color: #475569;">Giảm cố định (VNĐ)</label>
+                    <input type="number" name="discount_amount" placeholder="VD: 30000" min="0" value="0" style="width: 100%;">
+                </div>
+
+                <div id="newFieldDiscountPercent" style="display: none;">
+                    <label style="display:block; margin-bottom: 6px; font-size: 13px; color: #475569;">Giảm theo %</label>
+                    <input type="number" name="discount_percent" placeholder="VD: 10" min="0" max="100" value="0" style="width: 100%;">
+                </div>
+
+                <div id="newFieldDiscountMode" style="display: none;">
+                    <label style="display:block; margin-bottom: 6px; font-size: 13px; color: #475569;">Kiểu giảm giá</label>
+                    <select name="discount_mode" id="newPromoDiscountMode" onchange="toggleNewPromotionFields()" style="width: 100%;">
+                        <option value="amount">Giảm tiền</option>
+                        <option value="percent">Giảm %</option>
+                    </select>
+                </div>
+
+                <div id="newFieldMinItems" style="display: none;">
+                    <label style="display:block; margin-bottom: 6px; font-size: 13px; color: #475569;">Số món tối thiểu</label>
+                    <input type="number" name="min_items" placeholder="Số món tối thiểu" min="1" value="3" style="width: 100%;">
+                </div>
+
+                <div id="newFieldLucky" style="display: none; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="display:block; margin-bottom: 6px; font-size: 13px; color: #475569;">Giảm %</label>
+                        <input type="number" name="lucky_discount_percent" placeholder="% giảm" min="0" max="100" value="15" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom: 6px; font-size: 13px; color: #475569;">Tồn kho tối thiểu</label>
+                        <input type="number" name="min_stock" placeholder="VD: 60" min="0" value="60" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom: 6px; font-size: 13px; color: #475569;">Khung giờ</label>
+                        <input type="text" name="time_windows" placeholder="6-12,13-15" value="6-12,13-15" style="width: 100%;">
+                    </div>
+                </div>
+
+                <label style="display: inline-flex; align-items: center; gap: 6px;">
+                    <input type="checkbox" name="enabled" checked> Bật ngay sau khi tạo
+                </label>
+            </div>
+
+            <div style="text-align: right; margin-top: 20px;">
+                <button type="button" class="btn btn-upload" onclick="toggleAddPromotionModal()">Hủy</button>
+                <button type="submit" class="btn btn-add">Tạo mới</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleAddPromotionModal() {
+        const modal = document.getElementById('addPromotionModal');
+        if (!modal) return;
+        modal.classList.toggle('show');
+    }
+
+    function toggleNewPromotionFields() {
+        const type = document.getElementById('newPromoType')?.value || 'free_ship';
+        const mode = document.getElementById('newPromoDiscountMode')?.value || 'amount';
+        const discountMode = document.getElementById('newFieldDiscountMode');
+        const discountAmount = document.getElementById('newFieldDiscountAmount');
+        const discountPercent = document.getElementById('newFieldDiscountPercent');
+        const minItems = document.getElementById('newFieldMinItems');
+        const lucky = document.getElementById('newFieldLucky');
+        const isAmountOrGroup = (type === 'fixed_discount' || type === 'group_combo');
+        if (discountMode) discountMode.style.display = isAmountOrGroup ? 'block' : 'none';
+        if (discountAmount) discountAmount.style.display = (isAmountOrGroup && mode === 'amount') ? 'block' : 'none';
+        if (discountPercent) discountPercent.style.display = (isAmountOrGroup && mode === 'percent') ? 'block' : 'none';
+        if (minItems) minItems.style.display = type === 'group_combo' ? 'block' : 'none';
+        if (lucky) lucky.style.display = type === 'lucky_hour' ? 'grid' : 'none';
+    }
+
+    function togglePromotionEditor(index, show) {
+        const editor = document.getElementById(`promo-editor-${index}`);
+        const editBtn = document.getElementById(`promo-edit-btn-${index}`);
+        if (!editor) return;
+        editor.style.display = show ? 'inline-flex' : 'none';
+        if (editBtn) {
+            editBtn.style.display = show ? 'none' : 'inline-flex';
+        }
+    }
+
+    function closePromotionEditorOnSubmit(index) {
+        togglePromotionEditor(index, false);
+        return true;
+    }
+
+    function deletePromotion(promoCode) {
+        if (!confirm(`Xóa vĩnh viễn mã khuyến mại ${promoCode}?`)) {
+            return;
+        }
+
+        fetch(`/admin/promotions/delete/${encodeURIComponent(promoCode)}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    alert(data.message || 'Không thể xóa mã khuyến mại.');
+                    return;
+                }
+                const row = document.getElementById(`promo-row-${promoCode}`);
+                if (row) row.remove();
+                alert(data.message || 'Đã xóa mã khuyến mại.');
+            })
+            .catch(() => {
+                alert('Không thể kết nối đến máy chủ.');
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleNewPromotionFields();
+    });
+</script>
+{% endblock %}
+

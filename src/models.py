@@ -1,7 +1,9 @@
 from . import db
 from datetime import datetime
+from flask_login import UserMixin
+from werkzeug.security import check_password_hash, generate_password_hash
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -17,6 +19,12 @@ class User(db.Model):
     cart = db.relationship('Cart', backref='user', uselist=False, cascade="all, delete-orphan")
     orders = db.relationship('Order', backref='user', lazy=True)
     reviews = db.relationship('Review', backref='user', lazy=True)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 
 class Category(db.Model):
@@ -49,6 +57,7 @@ class ProductVariant(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('products.id', ondelete='CASCADE'))
     size_name = db.Column(db.String(50), nullable=False)
     price = db.Column(db.Numeric(10, 2), nullable=False)
+    discount_percent = db.Column(db.Numeric(5, 2), default=0)
     stock = db.Column(db.Integer, default=0)
 
 
@@ -67,6 +76,8 @@ class CartItem(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     variant_id = db.Column(db.Integer, db.ForeignKey('product_variants.id'))
     quantity = db.Column(db.Integer, nullable = False, default = 1)
+    size_name = db.Column(db.String(10), nullable=False, default='S')
+    size_extra = db.Column(db.Numeric(10, 2), nullable=False, default=0)
 
 class Order(db.Model):
     __tablename__ = 'orders'
@@ -90,6 +101,8 @@ class OrderItem(db.Model):
     variant_id = db.Column(db.Integer, db.ForeignKey('product_variants.id'))
     quantity = db.Column(db.Integer, nullable=False)
     price_at_purchase = db.Column(db.Numeric(10, 2), nullable=False)
+    size_name = db.Column(db.String(10), nullable=False, default='S')
+    size_extra = db.Column(db.Numeric(10, 2), nullable=False, default=0)
 
 
 class Payment(db.Model):

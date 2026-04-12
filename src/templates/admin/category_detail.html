@@ -1,0 +1,88 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Chi tiết danh mục - InvenStory{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <a href="{{ url_for('admin.admin_categories') }}" class="btn btn-upload" style="margin-bottom: 10px; width: fit-content;">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại danh mục
+        </a>
+        <h1 style="font-size: 24px; font-weight: 600; margin: 0;">Chi tiết danh mục: {{ category.name }}</h1>
+    </div>
+</div>
+
+<div class="data-card" style="padding: 20px; margin-bottom: 20px;">
+    <h3 style="font-size: 18px; margin-bottom: 16px;">Chỉnh sửa danh mục</h3>
+    <form method="post" action="{{ url_for('admin.update_category', category_id=category.id) }}">
+        <div class="input-row" style="margin-bottom: 12px;">
+            <div>
+                <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Tên danh mục</label>
+                <input type="text" name="ten_danh_muc" value="{{ category.name }}" required style="width:100%;">
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Mã danh mục</label>
+                <input type="text" name="ma_danh_muc" value="{{ category.category_code }}" required style="width:100%; text-transform: uppercase;">
+            </div>
+        </div>
+        <div style="margin-bottom: 14px;">
+            <label style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Mô tả</label>
+            <textarea name="mo_ta" rows="3" style="width:100%; padding: 10px; border: 1px solid var(--border); border-radius: 10px;">{{ category.description or '' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-add">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
+        </button>
+    </form>
+</div>
+
+<div class="data-card">
+    <div style="padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-size: 16px; margin: 0;">Món ăn thuộc danh mục ({{ product_rows|length }})</h3>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Tên món</th>
+                <th>SKU</th>
+                <th>Giá thấp nhất</th>
+                <th>Tồn kho</th>
+                <th>Trạng thái</th>
+                <th style="text-align: right;">Xem</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in product_rows %}
+            <tr>
+                <td>
+                    <strong>{{ row.name }}</strong>
+                    <div class="text-muted" style="font-size: 12px;">{{ row.created_at.strftime('%d/%m/%Y') if row.created_at else '' }}</div>
+                </td>
+                <td>{{ row.sku }}</td>
+                <td>{{ "{:,.0f}".format(row.price).replace(",", ".") }}đ</td>
+                <td>{{ row.stock }}</td>
+                <td>
+                    {% if row.is_available %}
+                    <span class="status-badge status-new">Đang bán</span>
+                    {% else %}
+                    <span class="status-badge status-read">Ngừng bán</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    <a href="{{ url_for('admin.admin_products', search=row.sku) }}" class="btn btn-upload" style="padding: 6px 10px; width: fit-content;">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="empty-state">
+                    <i class="fa-solid fa-utensils"></i>
+                    <p>Danh mục này chưa có món ăn nào.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

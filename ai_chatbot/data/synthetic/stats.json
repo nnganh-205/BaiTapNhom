@@ -1,0 +1,23 @@
+{
+  "total_samples": 300000,
+  "seed": 20260414,
+  "splits": {
+    "train": 270000,
+    "dev": 15000,
+    "test": 15000
+  },
+  "intent_frequency": {
+    "delivery": 28337,
+    "availability": 40137,
+    "greeting": 31201,
+    "popular": 34020,
+    "diet": 25880,
+    "promotion": 48938,
+    "budget": 49075,
+    "menu": 52075,
+    "order": 31349,
+    "payment": 31162
+  },
+  "fragment_count": 77049,
+  "fragment_ratio": 0.2568
+}

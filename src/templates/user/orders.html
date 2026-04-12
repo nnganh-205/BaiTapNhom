@@ -1,0 +1,44 @@
+{% extends "user/layout.html" %}
+
+{% block title %}Đơn hàng của tôi - InvenStory{% endblock %}
+
+{% block content %}
+<section class="bg-shop" style="padding-top: 120px;">
+    <div class="container orders-shell">
+        <div class="orders-panel">
+            <div class="orders-header">
+                <h2 class="mb-0">Đơn hàng của tôi</h2>
+                <div class="order-tabs">
+                    <a href="{{ url_for('user.my_orders', tab='placed') }}" class="order-tab {% if active_tab == 'placed' %}active{% endif %}">Đang xử lý</a>
+                    <a href="{{ url_for('user.my_orders', tab='received') }}" class="order-tab {% if active_tab == 'received' %}active{% endif %}">Đã nhận</a>
+                </div>
+            </div>
+
+            {% set orders = placed_orders if active_tab == 'placed' else received_orders %}
+            {% if orders %}
+                <div class="order-list">
+                {% for order in orders %}
+                    <div class="order-card-user">
+                        <div>
+                            <h5>Mã đơn: {{ order.order_code }}</h5>
+                            <p class="mb-1">Ngày đặt: {{ order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else '' }}</p>
+                            <p class="mb-0">Tổng tiền: <strong>{{ "{:,.0f}".format(order.total_price).replace(",", ".") }}₫</strong></p>
+                        </div>
+                        <div class="order-card-actions">
+                            <span class="status-chip {{ 'status-placed' if order.status == 'pending' else 'status-received' }}">
+                                {{ 'Đang chờ xác nhận nhận hàng' if order.status == 'pending' else 'Đã nhận' }}
+                            </span>
+                            <a class="btn btn-outline-primary btn-sm" href="{{ url_for('user.order_detail', order_id=order.id) }}">Xem chi tiết</a>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-products">Chưa có đơn hàng trong mục này.</div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+
