@@ -5,27 +5,20 @@
 {% block content %}
 <div class="page-header">
     <h1 class="report-title">Góp ý khách hàng</h1>
-    <div class="header-actions">
-        <select class="report-select">
-            <option>Tất cả đánh giá</option>
-            <option>5 sao - Rất tốt</option>
-            <option>1-3 sao - Cần lưu ý</option>
-        </select>
-        <button class="btn btn-upload">Xuất báo cáo</button>
-    </div>
+
 </div>
 
 <div class="stats-grid" style="margin-bottom: 24px;">
     <div class="data-card stat-card">
-        <h2 style="color: var(--warning);">0</h2>
+        <h2 style="color: var(--warning);">{{ new_feedback_count }}</h2>
         <p>Phản hồi mới</p>
     </div>
     <div class="data-card stat-card">
-        <h2>0.0</h2>
+        <h2>{{ avg_rating }} <i class="fa-solid fa-star" style="font-size: 16px; color: var(--warning);"></i></h2>
         <p>Điểm hài lòng trung bình</p>
     </div>
     <div class="data-card stat-card">
-        <h2>0</h2>
+        <h2>{{ total_reviews }}</h2>
         <p>Tổng số lượt đánh giá</p>
     </div>
 </div>
@@ -33,31 +26,146 @@
 <div class="data-card">
     <div class="table-header-reports">
         <span id="table-title">Danh sách phản hồi gần đây</span>
-        <input type="text" placeholder="Tìm theo tên khách, nội dung..." style="width: 300px;">
     </div>
 
     <table>
         <thead>
             <tr>
-                <th style="width: 15%;">Khách hàng</th>
+                <th style="width: 20%;">Khách hàng</th>
                 <th style="width: 15%;">Mức độ</th>
                 <th>Nội dung góp ý</th>
                 <th style="width: 15%;">Ngày gửi</th>
-                <th style="width: 10%;">Thao tác</th>
+                <th style="width: 15%; text-align: right;">Thao tác</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="feedbackTable">
+
+            {% for review in reviews %}
+            <tr id="review-row-{{ review.id }}"
+                style="{% if not review.is_read %}background-color: #f8fafc;{% endif %}">
+                <td>
+                    <b>{{ review.user.full_name if review.user else 'Khách vãng lai' }}</b>
+                </td>
+
+                <td>
+                    <div style="color: var(--warning); font-size: 12px;">
+                        {% for i in range(5) %}
+                        {% if i < review.rating|int %} <i class="fa-solid fa-star"></i>
+                            {% else %}
+                            <i class="fa-regular fa-star" style="color: #cbd5e1;"></i>
+                            {% endif %}
+                            {% endfor %}
+                    </div>
+                </td>
+
+                <td>
+                    <span style="font-size: 14px; color: var(--text-main);">{{ review.comment }}</span>
+                    {% if not review.is_read %}
+                    <span id="badge-{{ review.id }}" class="status-badge"
+                        style="background: #fef08a; color: #854d0e; margin-left: 8px; font-size: 10px;">MỚI</span>
+                    {% endif %}
+                </td>
+
+                <td>{{ review.created_at.strftime('%d/%m/%Y') if review.created_at else '' }}</td>
+
+                <td style="text-align: right; display: flex; justify-content: flex-end; gap: 5px;">
+                    {% if not review.is_read %}
+                    <button id="btn-read-{{ review.id }}" class="btn text-success"
+                        style="padding: 6px 10px; background: #f0fdf4; border: 1px solid #bbf7d0;"
+                        onclick="markAsRead({{ review.id }})" title="Đánh dấu đã đọc">
+                        <i class="fa-solid fa-check"></i>
+                    </button>
+                    {% endif %}
+
+                    <button class="btn text-danger" style="padding: 6px 10px; background: transparent;"
+                        onclick="deleteFeedback({{ review.id }})" title="Xóa góp ý">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% else %}
             <tr>
                 <td colspan="5" class="empty-state">
                     <i class="fa-solid fa-comment-slash"></i>
                     <p>Hiện tại chưa có phản hồi nào từ khách hàng.</p>
                 </td>
             </tr>
+            {% endfor %}
+
         </tbody>
     </table>
+</div>
+
+<div class="pagination-wrapper"
+    style="display: flex; justify-content: flex-end; align-items: center; margin-top: 20px; gap: 8px;">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.admin_feedback', page=pagination.prev_num) }}" class="btn btn-upload"
+        style="padding: 8px 12px;">
+        <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="padding: 8px 12px; opacity: 0.5; cursor: not-allowed;" disabled><i
+            class="fa-solid fa-chevron-left"></i></button>
+    {% endif %}
+
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if page_num %}
+    {% if pagination.page == page_num %}
+    <button class="btn btn-add" style="padding: 8px 14px; font-weight: bold;">{{ page_num }}</button>
+    {% else %}
+    <a href="{{ url_for('admin.admin_feedback', page=page_num) }}" class="btn btn-upload" style="padding: 8px 14px;">{{
+        page_num }}</a>
+    {% endif %}
+    {% else %}
+    <span style="color: var(--text-muted);">...</span>
+    {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.admin_feedback', page=pagination.next_num) }}" class="btn btn-upload"
+        style="padding: 8px 12px;">
+        <i class="fa-solid fa-chevron-right"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="padding: 8px 12px; opacity: 0.5; cursor: not-allowed;" disabled><i
+            class="fa-solid fa-chevron-right"></i></button>
+    {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/feedback.js') }}"></script>
+<script>
+    // Hàm Đánh dấu đã đọc
+    function markAsRead(reviewId) {
+        fetch(`/admin/read-feedback/${reviewId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Đổi giao diện cho dòng đó (bỏ màu nền xám)
+                    document.getElementById(`review-row-${reviewId}`).style.backgroundColor = "transparent";
+
+                    // Ẩn chữ "MỚI"
+                    let badge = document.getElementById(`badge-${reviewId}`);
+                    if (badge) badge.style.display = 'none';
+
+                    // Ẩn luôn cái nút check màu xanh
+                    let btnRead = document.getElementById(`btn-read-${reviewId}`);
+                    if (btnRead) btnRead.style.display = 'none';
+                }
+            });
+    }
+
+    // Hàm Xóa Góp ý
+    function deleteFeedback(reviewId) {
+        if (confirm("Bạn có chắc chắn muốn xóa phản hồi này không?")) {
+            fetch(`/admin/delete-feedback/${reviewId}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById(`review-row-${reviewId}`).remove();
+                    }
+                });
+        }
+    }
+</script>
 {% endblock %}

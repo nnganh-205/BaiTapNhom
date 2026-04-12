@@ -32,13 +32,17 @@
                         <a href="{{ url_for('admin.admin_products') }}"><i class="fa-solid fa-burger"></i> <span>Sản
                                 phẩm</span></a>
                     </li>
-                    <li class="nav-item {% if request.endpoint == 'admin_categories' %}active{% endif %}">
+                    <li class="nav-item {% if request.endpoint in ['admin_categories', 'admin.admin_categories', 'admin_category_detail', 'admin.admin_category_detail'] %}active{% endif %}">
                         <a href="{{ url_for('admin.admin_categories') }}"><i class="fa-solid fa-list-ul"></i> <span>Danh
                                 mục</span></a>
                     </li>
                     <li class="nav-item {% if request.endpoint == 'admin_orders' %}active{% endif %}">
                         <a href="{{ url_for('admin.admin_orders') }}"><i class="fa-solid fa-clipboard-list"></i>
                             <span>Đơn hàng</span></a>
+                    </li>
+                    <li class="nav-item {% if request.endpoint == 'admin_promotions' %}active{% endif %}">
+                        <a href="{{ url_for('admin.admin_promotions') }}"><i class="fa-solid fa-ticket"></i>
+                            <span>Khuyến mại</span></a>
                     </li>
                     <li class="nav-item {% if request.endpoint == 'admin_feedback' %}active{% endif %}">
                         <a href="{{ url_for('admin.admin_feedback') }}"><i class="fa-solid fa-comment-dots"></i>
@@ -65,7 +69,7 @@
                             <i class="fa-solid fa-key"></i> <span>Đổi mật khẩu</span>
                         </a>
                         <div class="menu-divider"></div>
-                        <a href="#" class="user-menu-item logout">
+                        <a href="{{ url_for('auth.logout') }}" class="user-menu-item logout">
                             <i class="fa-solid fa-right-from-bracket"></i> <span>Đăng xuất</span>
                         </a>
                     </div>
@@ -77,8 +81,7 @@
             <header class="top-header">
                 <div class="header-left-empty"></div>
                 <div class="header-tools">
-                    <span class="current-date">06/04/2026</span>
-                    <i class="fa-regular fa-bell"></i>
+                    <span class="current-date"></span>
                 </div>
             </header>
 
@@ -88,8 +91,47 @@
         </main>
     </div>
 
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // 1. XỬ LÝ NGÀY THÁNG ĐỘNG
+            const dateElement = document.querySelector('.current-date');
+            if (dateElement) {
+                const today = new Date();
+                const dd = String(today.getDate()).padStart(2, '0');
+                const mm = String(today.getMonth() + 1).padStart(2, '0'); // Tháng trong JS bắt đầu từ 0
+                const yyyy = today.getFullYear();
+                dateElement.textContent = dd + '/' + mm + '/' + yyyy;
+            }
+
+            // 2. XỬ LÝ DROPDOWN "QUẢN LÝ CỬA HÀNG"
+            const userInfoWrapper = document.querySelector('.user-info-wrapper');
+            const userMenu = document.getElementById('userMenu');
+            const arrowIcon = document.getElementById('arrowIcon');
+
+            if (userInfoWrapper && userMenu) {
+                // Bắt sự kiện click vào khu vực avatar/tên
+                userInfoWrapper.addEventListener('click', function (e) {
+                    e.stopPropagation(); // Ngăn chặn sự kiện click lan ra ngoài body
+                    userMenu.classList.toggle('active'); // Bật/tắt class hiển thị menu
+
+
+                    if (userMenu.classList.contains('active')) {
+                        arrowIcon.style.transform = 'rotate(180deg)';
+                    } else {
+                        arrowIcon.style.transform = 'rotate(0deg)';
+                    }
+                });
+
+                // Xử lý thông minh: Click ra ngoài vùng menu thì tự động đóng lại
+                document.addEventListener('click', function (e) {
+                    if (!userInfoWrapper.contains(e.target) && !userMenu.contains(e.target)) {
+                        userMenu.classList.remove('active');
+                        arrowIcon.style.transform = 'rotate(0deg)';
+                    }
+                });
+            }
+        });
+    </script>
 
     {% block scripts %}{% endblock %}
 

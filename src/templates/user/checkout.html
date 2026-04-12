@@ -1,0 +1,375 @@
+{% extends "user/layout.html" %}
+
+{% block title %}Thanh toán - InvenStory{% endblock %}
+
+{% block content %}
+<section class="bg-shop" style="padding-top: 120px;">
+    <div class="container">
+        <h2 class="mb-4">Thanh toán</h2>
+
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <form method="post" class="card border-0 shadow-sm p-4">
+                    <h5 class="mb-3">Thông tin nhận hàng</h5>
+                    <div class="mb-3">
+                        <label class="form-label" for="checkout-full-name">Họ và tên</label>
+                        <input id="checkout-full-name" class="form-control" name="full_name" value="{{ current_user.full_name or '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="checkout-phone">Số điện thoại</label>
+                        <input id="checkout-phone" class="form-control" name="phone" value="{{ current_user.phone or '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="checkout-address">Địa chỉ giao hàng</label>
+                        <input id="checkout-address" class="form-control" name="address" value="{{ current_user.address or '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="checkout-note">Ghi chú</label>
+                        <textarea id="checkout-note" class="form-control" name="note" rows="3" placeholder="Ghi chú cho đơn hàng..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-upload w-100" onclick="togglePromoPanel()">
+                            Áp dụng ưu đãi
+                        </button>
+                        <div id="promoPanel" class="mt-2 border rounded p-2" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-start py-2 border-bottom">
+                                <div><b>KHONG_AP_DUNG</b> - Không áp dụng mã ưu đãi</div>
+                                <input type="radio" class="promo-radio" name="promo_code" value="" {% if not promo_code %}checked{% endif %}>
+                            </div>
+                            {% for promo in promo_options %}
+                            <div class="d-flex justify-content-between align-items-start py-2 border-bottom">
+                                <div>
+                                    <div><b>{{ promo.code }}</b> - {{ promo.name }}</div>
+                                    {% if not promo.eligible %}
+                                    <small class="text-muted">{{ promo.reason }}</small>
+                                    {% endif %}
+                                </div>
+                                {% if promo.eligible %}
+                                <input type="radio" class="promo-radio" name="promo_code" value="{{ promo.code }}" {% if promo_code == promo.code %}checked{% endif %}>
+                                {% else %}
+                                <span class="text-muted" title="Chưa đủ điều kiện">-</span>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <small class="text-muted">Hiện chưa có mã ưu đãi.</small>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {% if lucky_hour_active %}
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-add w-100" id="openLuckyHourBtn">
+                            <i class="fa-solid fa-gift"></i> Xem món trong khung giờ vàng (-15%)
+                        </button>
+                        <small class="text-muted d-block mt-1">Mở popup để thêm nhanh món ưu đãi mà không làm rối form thanh toán.</small>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Phương thức thanh toán</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="payment-cod" value="cod" checked>
+                            <label class="form-check-label" for="payment-cod">Thanh toán khi nhận hàng (COD)</label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="radio" name="payment_method" id="payment-vnpay" value="vnpay">
+                            <label class="form-check-label" for="payment-vnpay">Thanh toán qua VNPay (Sandbox)</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Xác nhận đặt hàng</button>
+                </form>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm p-4">
+                    <h5 class="mb-3">Đơn hàng</h5>
+                    {% for item in cart_items %}
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <div class="d-flex" style="gap: 10px;">
+                            <img src="{{ item.image_url or 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=300&auto=format&fit=crop' }}"
+                                alt="{{ item.name }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px;">
+                            <div>
+                                <div>{{ item.name }}</div>
+                                <div class="d-flex align-items-center" style="gap: 8px;">
+                                    <small class="text-muted">Size:</small>
+                                    <select class="form-select form-select-sm checkout-size-select" data-item-id="{{ item.id }}" style="width: auto; padding: 2px 8px; line-height: 1.2;">
+                                        <option value="S" {% if item.size_name == 'S' %}selected{% endif %}>Vừa</option>
+                                        <option value="L" {% if item.size_name == 'L' %}selected{% endif %}>To (+15k)</option>
+                                    </select>
+                                </div>
+                                {% set lucky_item_discounted = ('LUCKY15' in applied_promotions) and item.is_lucky_item %}
+                                {% if lucky_item_discounted %}
+                                <small class="text-muted">
+                                    Đơn giá:
+                                    <span class="text-decoration-line-through">{{ "{:,.0f}".format(item.price).replace(",", ".") }}₫</span>
+                                    <span class="text-success fw-semibold">{{ "{:,.0f}".format(item.price * 0.85).replace(",", ".") }}₫</span>
+                                </small>
+                                {% else %}
+                                <small class="text-muted">Đơn giá: {{ "{:,.0f}".format(item.price).replace(",", ".") }}₫</small>
+                                {% endif %}
+                                <div class="d-flex align-items-center mt-1" style="gap: 8px;">
+                                    <small class="text-muted">Số lượng:</small>
+                                    <button type="button" class="btn btn-upload checkout-qty-btn" data-item-id="{{ item.id }}" data-delta="-1" style="padding: 2px 8px; line-height: 1;">-</button>
+                                    <span style="min-width: 24px; text-align: center; font-weight: 600;">{{ item.quantity }}</span>
+                                    <button type="button" class="btn btn-upload checkout-qty-btn" data-item-id="{{ item.id }}" data-delta="1" style="padding: 2px 8px; line-height: 1;">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            {% if lucky_item_discounted %}
+                            <small class="text-muted text-decoration-line-through d-block">{{ "{:,.0f}".format(item.line_total).replace(",", ".") }}₫</small>
+                            <strong class="text-success">{{ "{:,.0f}".format(item.line_total * 0.85).replace(",", ".") }}₫</strong>
+                            {% else %}
+                            <strong>{{ "{:,.0f}".format(item.line_total).replace(",", ".") }}₫</strong>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <span>Tạm tính</span>
+                        <strong>{{ "{:,.0f}".format(subtotal).replace(",", ".") }}₫</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <span>Phí vận chuyển (cố định)</span>
+                        <strong>{{ "{:,.0f}".format(shipping_fee).replace(",", ".") }}₫</strong>
+                    </div>
+                    {% if shipping_discount > 0 %}
+                    <div class="d-flex justify-content-between mt-2 text-success">
+                        <span>Giảm phí ship</span>
+                        <strong>-{{ "{:,.0f}".format(shipping_discount).replace(",", ".") }}₫</strong>
+                    </div>
+                    {% endif %}
+                    {% if promotion_discount > 0 %}
+                    <div class="d-flex justify-content-between mt-2 text-success">
+                        <span>Giảm giá khuyến mại</span>
+                        <strong>-{{ "{:,.0f}".format(promotion_discount).replace(",", ".") }}₫</strong>
+                    </div>
+                    {% endif %}
+                    {% if applied_promotions %}
+                    <div class="mt-2">
+                        <small class="text-success">Đang áp dụng: {{ applied_promotions | join(', ') }}</small>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-3 pt-3 border-top">
+                        <small class="text-muted d-block mb-2">Tiến độ mở ưu đãi:</small>
+                        {% for goal in discount_progress %}
+                        <div class="d-flex justify-content-between" style="font-size: 13px;">
+                            <span>{{ goal.label }}</span>
+                            {% if goal.is_confirmed %}
+                            <span class="text-success">Mã {{ goal.code }} đã xác nhận</span>
+                            {% elif goal.is_unlocked %}
+                            <span class="text-success">Đủ điều kiện</span>
+                            {% else %}
+                            <span class="text-muted">Còn {{ "{:,.0f}".format(goal.remaining).replace(",", ".") }}₫</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-3 pt-3 border-top">
+                        <span class="fw-bold">Tổng cộng</span>
+                        <span class="fw-bold text-primary">{{ "{:,.0f}".format(grand_total).replace(",", ".") }}₫</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if lucky_hour_active %}
+<div id="luckyHourModal" class="lucky-hour-modal-overlay" style="display: none;">
+    <div class="lucky-hour-modal-card">
+        <div class="lucky-hour-modal-header">
+            <div>
+                <h5><i class="fa-solid fa-star" style="color: #f59e0b;"></i> Khung giờ vàng đang mở</h5>
+                <p class="text-muted mb-0">Thêm món ưu đãi ngay tại đây rồi quay lại hoàn tất thanh toán.</p>
+            </div>
+            <button type="button" class="btn btn-upload" onclick="closeLuckyModal(false)">Đóng</button>
+        </div>
+
+        <div class="lucky-hour-modal-body">
+            <div class="row g-2">
+                {% for item in lucky_products %}
+                <div class="col-md-6 col-xl-4">
+                    <div class="border rounded p-2 h-100 d-flex flex-column" style="background: white;">
+                        <img src="{{ item.image_url }}" alt="{{ item.name }}" style="width: 100%; height: 110px; object-fit: cover; border-radius: 8px;">
+                        <div class="mt-2" style="font-size: 13px; font-weight: 600;">{{ item.name }}</div>
+                        <div style="font-size: 12px;" class="text-muted">Tồn kho: {{ item.stock }}</div>
+                        <div class="mt-1" style="font-size: 13px;">
+                            <span style="text-decoration: line-through; color: #94a3b8;">{{ "{:,.0f}".format(item.price).replace(",", ".") }}₫</span>
+                            <span style="color: #16a34a; font-weight: 700; margin-left: 6px;">{{ "{:,.0f}".format(item.discounted_price).replace(",", ".") }}₫</span>
+                        </div>
+                        <button type="button" class="btn btn-add mt-2" style="padding: 6px 10px; font-size: 12px;"
+                            onclick='addLuckyItem({{ item.id }}, {{ item.name|tojson }}, {{ item.image_url|tojson }}, {{ item.price }})'>
+                            <i class="fa-solid fa-cart-plus"></i> Thêm nhanh
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="lucky-hour-modal-footer">
+            <button type="button" class="btn btn-upload" onclick="closeLuckyModal(false)">Ở lại form</button>
+            <button type="button" class="btn btn-add" onclick="closeLuckyModal(true)">Tiếp tục thanh toán</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function togglePromoPanel() {
+        const panel = document.getElementById('promoPanel');
+        if (!panel) return;
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function openLuckyModal() {
+        const modal = document.getElementById('luckyHourModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function buildCheckoutUrl(promoCode) {
+        const url = new URL(window.location.origin + '/checkout');
+        if (promoCode) {
+            url.searchParams.set('promo_code', promoCode);
+        }
+        return url.toString();
+    }
+
+    async function updateCheckoutItem(itemId, payload, failureMessage) {
+        try {
+            const response = await fetch(`/api/v1/cart/items/${itemId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            if (!response.ok) {
+                alert(failureMessage || 'Không thể cập nhật đơn hàng lúc này.');
+                return;
+            }
+
+            const selectedPromo = document.querySelector('.promo-radio:checked')?.value || '';
+            window.location.href = buildCheckoutUrl(selectedPromo);
+        } catch (_error) {
+            alert('Không thể kết nối đến máy chủ.');
+        }
+    }
+
+    async function updateCheckoutQuantity(itemId, delta) {
+        const buttons = document.querySelectorAll(`.checkout-qty-btn[data-item-id="${itemId}"]`);
+        const qtyTextEl = buttons[0]?.parentElement?.querySelector('span');
+        const currentQty = parseInt(qtyTextEl?.innerText || '1', 10) || 1;
+        const nextQty = currentQty + delta;
+
+        if (nextQty <= 0) {
+            const shouldRemove = window.confirm('Số lượng sẽ về 0. Bạn có muốn xóa món này khỏi đơn hàng không?');
+            if (!shouldRemove) {
+                return;
+            }
+        }
+
+        await updateCheckoutItem(itemId, { quantity: nextQty }, 'Không thể cập nhật số lượng lúc này.');
+    }
+
+    async function updateCheckoutSize(itemId, size) {
+        await updateCheckoutItem(itemId, { size: size }, 'Không thể cập nhật kích cỡ lúc này.');
+    }
+
+    async function addLuckyItem(productId, productName, imageUrl, unitPrice) {
+        if (!window.cartClient || !window.cartClient.addToCart) {
+            alert('Không thể kết nối giỏ hàng lúc này.');
+            return;
+        }
+        const ok = await window.cartClient.addToCart(productId, 1, {
+            name: productName,
+            image: imageUrl,
+            price: unitPrice,
+        });
+        if (ok) {
+            const selectedPromo = document.querySelector('.promo-radio:checked')?.value || '';
+            window.location.href = buildCheckoutUrl(selectedPromo);
+        }
+    }
+
+    function closeLuckyModal(goToPay) {
+        const modal = document.getElementById('luckyHourModal');
+        if (modal) modal.style.display = 'none';
+        if (goToPay) {
+            const submitBtn = document.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const checked = document.querySelector('.promo-radio:checked');
+        const panel = document.getElementById('promoPanel');
+        if (checked && panel) {
+            panel.style.display = 'block';
+        }
+
+        const radios = document.querySelectorAll('.promo-radio');
+        radios.forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                window.location.href = buildCheckoutUrl(this.value || '');
+            });
+        });
+
+        const qtyButtons = document.querySelectorAll('.checkout-qty-btn');
+        qtyButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                const itemId = parseInt(this.dataset.itemId || '0', 10);
+                const delta = parseInt(this.dataset.delta || '0', 10);
+                if (!itemId || !delta) return;
+                updateCheckoutQuantity(itemId, delta);
+            });
+        });
+
+        const sizeSelects = document.querySelectorAll('.checkout-size-select');
+        sizeSelects.forEach(function (selectEl) {
+            selectEl.addEventListener('change', function () {
+                const itemId = parseInt(this.dataset.itemId || '0', 10);
+                const size = String(this.value || 'S').toUpperCase();
+                if (!itemId || !size) return;
+                updateCheckoutSize(itemId, size);
+            });
+        });
+
+        const luckyModal = document.getElementById('luckyHourModal');
+        const openLuckyHourBtn = document.getElementById('openLuckyHourBtn');
+        if (openLuckyHourBtn) {
+            openLuckyHourBtn.addEventListener('click', openLuckyModal);
+        }
+        if (luckyModal) {
+            const key = 'lucky-hour-seen';
+            if (!sessionStorage.getItem(key)) {
+                openLuckyModal();
+                sessionStorage.setItem(key, '1');
+            }
+            luckyModal.addEventListener('click', function (event) {
+                if (event.target === luckyModal) {
+                    closeLuckyModal(false);
+                }
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && luckyModal.style.display !== 'none') {
+                    closeLuckyModal(false);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+
+
+
+
+
