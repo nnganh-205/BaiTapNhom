@@ -1,0 +1,49 @@
+[
+  {
+    "code": "FREESHIP90",
+    "name": "Đơn từ 90.000đ miễn phí ship",
+    "type": "free_ship",
+    "enabled": true,
+    "min_subtotal": 80000
+  },
+  {
+    "code": "SAVE30_130",
+    "name": "Đơn từ 130.000đ giảm 30.000đ",
+    "type": "fixed_discount",
+    "enabled": true,
+    "min_subtotal": 130000,
+    "discount_amount": 30000,
+    "discount_percent": 0,
+    "discount_mode": "amount"
+  },
+  {
+    "code": "GROUP60_300",
+    "name": "Combo nhóm từ 300.000đ giảm 60.000đ",
+    "type": "group_combo",
+    "enabled": true,
+    "min_subtotal": 300000,
+    "min_items": 3,
+    "discount_amount": 60000,
+    "discount_percent": 0,
+    "discount_mode": "amount"
+  },
+  {
+    "code": "LUCKY15",
+    "name": "Khung giờ vàng giảm 15%",
+    "type": "lucky_hour",
+    "enabled": true,
+    "min_subtotal": 150000,
+    "discount_percent": 15,
+    "min_stock": 60,
+    "time_windows": [
+      [
+        6,
+        12
+      ],
+      [
+        13,
+        15
+      ]
+    ]
+  }
+]

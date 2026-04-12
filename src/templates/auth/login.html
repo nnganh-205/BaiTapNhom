@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài khoản - InvenStory</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-card">
+            <div class="brand">InvenStory</div>
+            <h1>{{ 'Tạo tài khoản' if mode == 'register' else 'Đăng nhập' }}</h1>
+            <p class="sub-title">
+                {{ 'Đăng ký để bắt đầu mua sắm và theo dõi đơn hàng.' if mode == 'register' else 'Chào mừng quay lại, vui lòng đăng nhập để tiếp tục.' }}
+            </p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ 'alert-error' if category == 'error' else 'alert-success' }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if mode == 'register' %}
+            <form method="post" action="{{ url_for('auth.register') }}" class="auth-form">
+                <label for="username">Tên đăng nhập</label>
+                <input id="username" name="username" required>
+
+                <label for="full_name">Họ và tên</label>
+                <input id="full_name" name="full_name" required>
+
+                <label for="email">Email</label>
+                <input id="email" type="email" name="email" required>
+
+                <label for="password">Mật khẩu</label>
+                <input id="password" type="password" name="password" required>
+
+                <button type="submit" class="btn-primary">Tạo tài khoản</button>
+            </form>
+            <p class="switch-mode">Đã có tài khoản? <a href="{{ url_for('auth.login', next=next_page) if next_page else url_for('auth.login') }}">Đăng nhập</a></p>
+            {% else %}
+            <form method="post" action="{{ url_for('auth.login') }}" class="auth-form">
+                <input type="hidden" name="next" value="{{ next_page or '' }}">
+                <label for="username">Tên đăng nhập</label>
+                <input id="username" name="username" required>
+
+                <label for="password">Mật khẩu</label>
+                <input id="password" type="password" name="password" required>
+
+                <button type="submit" class="btn-primary">Đăng nhập</button>
+            </form>
+            <p class="switch-mode">Chưa có tài khoản? <a href="{{ url_for('auth.register', next=next_page) if next_page else url_for('auth.register') }}">Đăng ký</a></p>
+            {% endif %}
+
+            <a class="back-home" href="{{ url_for('user.user_index') }}">&larr; Quay về trang chủ</a>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
