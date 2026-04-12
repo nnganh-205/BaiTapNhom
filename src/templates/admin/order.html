@@ -6,49 +6,31 @@
 <div class="page-header">
     <h1 style="font-size: 24px; font-weight: 600;">Đơn hàng</h1>
     <div class="actions">
-        <button class="btn btn-add">
+        <button class="btn btn-add" onclick="toggleAdminOrderModal()">
             <i class="fa-solid fa-plus"></i> Tạo đơn mới
         </button>
     </div>
 </div>
 
 <div class="data-card" style="padding: 20px; margin-bottom: 24px; background: #f8fafc;">
-    <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
-        <input type="text" placeholder="Tìm tên khách, mã đơn..."
+    <form method="get" action="{{ url_for('admin.admin_orders') }}"
+        style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+        <input type="text" name="search" value="{{ search_query }}" placeholder="Tìm tên khách, mã đơn..."
             style="flex: 1; min-width: 250px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
 
         <span class="badge" style="background: #e2e8f0; color: #475569;">Sắp xếp:</span>
-        <select style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <select name="sort" style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
             <option value="date">Ngày tạo</option>
             <option value="total">Tổng tiền</option>
         </select>
 
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <label><input type="radio" name="order" checked> ↑</label>
-            <label><input type="radio" name="order"> ↓</label>
-        </div>
-        <button class="btn btn-upload" style="background: #334155; color: white; border: none;">Áp dụng</button>
-    </div>
+        <button type="submit" class="btn btn-upload" style="background: #334155; color: white; border: none;">Áp
+            dụng</button>
 
-    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 14px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span>Ngày:</span>
-            <input type="date" style="padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
-            <span>-</span>
-            <input type="date" style="padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span>Tiền:</span>
-            <input type="number" placeholder="Từ"
-                style="width: 80px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
-            <input type="number" placeholder="Đến"
-                style="width: 80px; padding: 5px; border: 1px solid #e2e8f0; border-radius: 6px;">
-        </div>
-
-        <button class="btn btn-add" style="padding: 8px 20px;">Lọc dữ liệu</button>
-        <button class="btn btn-upload">Xóa lọc</button>
-    </div>
+        {% if search_query %}
+        <a href="{{ url_for('admin.admin_orders') }}" class="btn btn-upload">Xóa lọc</a>
+        {% endif %}
+    </form>
 </div>
 
 <div class="data-card">
@@ -60,18 +42,186 @@
                 <th>Khách hàng</th>
                 <th>Số SP</th>
                 <th>Tổng tiền</th>
+                <th>Trạng thái</th>
                 <th>Ngày tạo</th>
-                <th>Thao tác</th>
+                <th style="text-align: right;">Thao tác</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="orderTable">
+            {% for order in orders %}
+            <tr id="order-row-{{ order.id }}">
+                <td>{{ loop.index + (pagination.page - 1) * pagination.per_page }}</td>
+                <td><b>#{{ order.order_code }}</b></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div
+                            style="width: 30px; height: 30px; background: var(--primary-light); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                            <i class="fa-solid fa-user" style="font-size: 12px;"></i>
+                        </div>
+                        <span>{{ order.user.full_name if order.user else 'Khách vãng lai' }}</span>
+                    </div>
+                </td>
+                <td>{{ order.items | sum(attribute='quantity') }}</td>
+                <td style="color: var(--danger); font-weight: 600;">
+                    {{ "{:,.0f}".format(order.total_price) }} đ
+                </td>
+                <td id="status-col-{{ order.id }}">
+                    {% if order.status == 'pending' %}
+                    <span class="status-badge" style="background: #fef08a; color: #854d0e;">Chưa giao</span>
+                    {% else %}
+                    <span class="status-badge" style="background: #dcfce7; color: #166534;">Đã giao</span>
+                    {% endif %}
+                </td>
+                <td>{{ order.created_at.strftime('%d/%m/%Y') if order.created_at else '' }}</td>
+                <td style="text-align: right; display: flex; justify-content: flex-end; gap: 5px;">
+                    <button class="btn text-success"
+                        style="padding: 6px 10px; background: #f0fdf4; border: 1px solid #bbf7d0;"
+                        onclick="toggleOrderStatus({{ order.id }})">
+                        <i class="fa-solid fa-check-double"></i>
+                    </button>
+                    <button class="btn text-danger" style="padding: 6px 10px; background: transparent;"
+                        onclick="deleteOrder({{ order.id }})">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% else %}
             <tr>
                 <td colspan="8" class="empty-state">
                     <i class="fa-solid fa-cart-flatbed"></i>
-                    <p>Đang chờ kết nối dữ liệu đơn hàng...</p>
+                    <p>Chưa có đơn hàng nào trong hệ thống.</p>
                 </td>
             </tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>
+
+<div class="pagination-wrapper"
+    style="display: flex; justify-content: flex-end; align-items: center; margin-top: 20px; gap: 8px;">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.admin_orders', page=pagination.prev_num, search=search_query) }}" class="btn btn-upload">
+        <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="opacity: 0.5; cursor: not-allowed;" disabled><i
+            class="fa-solid fa-chevron-left"></i></button>
+    {% endif %}
+
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if page_num %}
+    {% if pagination.page == page_num %}
+    <button class="btn btn-add" style="padding: 8px 14px; font-weight: bold;">{{ page_num }}</button>
+    {% else %}
+    <a href="{{ url_for('admin.admin_orders', page=page_num, search=search_query) }}" class="btn btn-upload"
+        style="padding: 8px 14px;">{{ page_num }}</a>
+    {% endif %}
+    {% else %}
+    <span style="color: var(--text-muted);">...</span>
+    {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.admin_orders', page=pagination.next_num, search=search_query) }}" class="btn btn-upload">
+        <i class="fa-solid fa-chevron-right"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="opacity: 0.5; cursor: not-allowed;" disabled><i
+            class="fa-solid fa-chevron-right"></i></button>
+    {% endif %}
+</div>
+
+<div id="adminAddOrderModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2>Tạo đơn hàng nhanh</h2>
+            <button type="button" class="close-modal" onclick="toggleAdminOrderModal()">&times;</button>
+        </div>
+
+        <form action="/admin/add-order" method="post">
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
+                <div class="input-group">
+                    <label>Khách hàng</label>
+                    <select name="khach_hang_id" style="width: 100%;">
+                        <option value="">-- Khách vãng lai --</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Sản phẩm</label>
+                    <select name="san_pham_id" required style="width: 100%;">
+                        {% for p in products %}
+                        <option value="{{ p.id }}">{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Địa chỉ giao hàng (Bắt buộc)</label>
+                    <input type="text" name="dia_chi" placeholder="Số nhà, tên đường..." required style="width: 100%;">
+                </div>
+
+                <div class="input-group">
+                    <label>Ghi chú đơn hàng</label>
+                    <textarea name="ghi_chu" rows="2" placeholder="Ví dụ: Giao giờ hành chính..."
+                        style="width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>Số lượng</label>
+                    <input type="number" name="so_luong" id="input_so_luong" value="1" min="1" required
+                        style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                </div>
+            </div>
+
+            <div style="text-align: right; margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee;">
+                <button type="button" class="btn btn-upload" onclick="toggleAdminOrderModal()">Hủy</button>
+                <button type="submit" class="btn btn-add">Tạo đơn</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleAdminOrderModal() {
+        const modal = document.getElementById('adminAddOrderModal');
+        if (modal) modal.classList.toggle('show');
+    }
+
+    function toggleOrderStatus(orderId) {
+        if (confirm("Xác nhận đổi trạng thái đơn hàng?")) {
+            fetch(`/admin/update-order-status/${orderId}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        let col = document.getElementById(`status-col-${orderId}`);
+                        col.innerHTML = data.new_status === 'completed'
+                            ? '<span class="status-badge" style="background: #dcfce7; color: #166534;">Đã giao</span>'
+                            : '<span class="status-badge" style="background: #fef08a; color: #854d0e;">Chưa giao</span>';
+                    }
+                })
+                .catch(() => {
+                    alert("Không thể kết nối đến máy chủ.")
+                });
+        }
+    }
+
+    function deleteOrder(orderId) {
+        if (confirm("Xóa vĩnh viễn đơn hàng này?")) {
+            fetch(`/admin/delete-order/${orderId}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) document.getElementById(`order-row-${orderId}`).remove();
+                })
+                .catch(() => {
+                    alert("Không thể kết nối đến máy chủ.");
+                });
+        }
+    }
+</script>
 {% endblock %}

@@ -1,0 +1,84 @@
+{% extends "user/layout.html" %}
+
+{% block title %}Chi tiết đơn hàng - InvenStory{% endblock %}
+
+{% block content %}
+<section class="bg-shop" style="padding-top: 120px;">
+    <div class="container" style="max-width: 900px;">
+        {% set back_tab = 'placed' if order.status == 'pending' else 'received' %}
+        <a href="{{ url_for('user.my_orders', tab=back_tab) }}" class="btn btn-link ps-0 mb-2">&larr; Quay lại đơn hàng</a>
+        <h3 class="mb-3">Chi tiết đơn hàng {{ order.order_code }}</h3>
+
+        <div class="card border-0 shadow-sm p-4 mb-4">
+            <div class="d-flex justify-content-between mb-3">
+                <span class="status-chip {{ 'status-placed' if order.status == 'pending' else ('status-received' if order.status == 'completed' else 'status-cancelled') }}">
+                    {{ 'Đang chờ xác nhận nhận hàng' if order.status == 'pending' else ('Đã nhận' if order.status == 'completed' else 'Đã hủy') }}
+                </span>
+                <span>{{ order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else '' }}</span>
+            </div>
+
+            <p class="mb-3 text-muted">
+                Thanh toán: <strong>
+                    {% if order.payment and order.payment.payment_status == 'completed' %}
+                        Đã thanh toán {{ '(VNPay)' if order.payment.payment_method == 'vnpay' else '(COD)' }}
+                    {% elif order.payment and order.payment.payment_status == 'failed' %}
+                        Thanh toán thất bại
+                    {% else %}
+                        Chờ thanh toán
+                    {% endif %}
+                </strong>
+            </p>
+
+            {% for item in items %}
+            <div class="d-flex justify-content-between py-2 border-bottom">
+                <span>{{ item.product_name }} x {{ item.quantity }}</span>
+                <strong>{{ "{:,.0f}".format(item.line_total).replace(",", ".") }}₫</strong>
+            </div>
+            {% endfor %}
+
+            <div class="d-flex justify-content-between mt-3">
+                <span>Tổng đơn</span>
+                <strong>{{ "{:,.0f}".format(order.total_price).replace(",", ".") }}₫</strong>
+            </div>
+
+            {% if order.status == 'pending' %}
+            <form method="post" action="{{ url_for('user.confirm_received', order_id=order.id) }}" class="mt-3">
+                <button type="submit" class="btn btn-primary">Xác nhận đã nhận hàng</button>
+            </form>
+            {% endif %}
+        </div>
+
+        {% if order.status == 'completed' %}
+        <div class="card border-0 shadow-sm p-4">
+            <h5 class="mb-3">Đánh giá món ăn</h5>
+            {% if review %}
+                <p class="mb-1"><strong>Đánh giá của bạn:</strong> {{ review.rating }}/5 sao</p>
+                <p class="mb-0">{{ review.comment or 'Không có nhận xét.' }}</p>
+            {% else %}
+                <form method="post" action="{{ url_for('user.submit_review', order_id=order.id) }}">
+                    <div class="mb-3">
+                        <label for="review-rating" class="form-label">Số sao</label>
+                        <select id="review-rating" name="rating" class="form-select" required>
+                            <option value="">Chọn số sao</option>
+                            <option value="5">5 sao</option>
+                            <option value="4">4 sao</option>
+                            <option value="3">3 sao</option>
+                            <option value="2">2 sao</option>
+                            <option value="1">1 sao</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="review-comment" class="form-label">Nhận xét</label>
+                        <textarea id="review-comment" name="comment" class="form-control" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">Gửi đánh giá</button>
+                </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+
+

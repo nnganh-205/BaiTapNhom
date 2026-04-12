@@ -24,66 +24,87 @@
             </div>
 
             <div class="categories-list">
-                <a href="#" class="category-badge active">Tất Cả</a>
-                <a href="#" class="category-badge">Burger</a>
-                <a href="#" class="category-badge">Gà Rán</a>
-                <a href="#" class="category-badge">Pizza</a>
-                <a href="#" class="category-badge">Đồ Uống</a>
+                <a href="#" data-category="all" class="category-badge {% if current_category == 'all' %}active{% endif %}">Tất Cả</a>
+                {% for category in categories %}
+                <a href="#" data-category="{{ category.id }}" class="category-badge {% if current_category == (category.id|string) %}active{% endif %}">{{ category.name }}</a>
+                {% endfor %}
             </div>
         </div>
 
+        {% if top_products %}
+        <div class="best-seller-strip">
+            <span class="best-label"><i class="fa-solid fa-fire"></i> Món được đặt nhiều nhất:</span>
+            {% for top in top_products %}
+            <button type="button" class="best-item" data-focus-product="{{ top.id }}">
+                {{ loop.index }}. {{ top.name }} ({{ top.total_ordered }} lượt)
+            </button>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <div class="filter-search-container">
-            <form class="search-box">
-                <input type="text" placeholder="Tìm tên món, hương vị...">
+            <form class="search-box" id="search-form">
+                <input id="search-input" type="text" value="{{ current_search }}" placeholder="Tìm tên món, hương vị...">
                 <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
 
             <div class="filter-group">
                 <label>Sắp xếp:</label>
                 <select id="sort">
-                    <option value="newest">Mới Nhất</option>
-                    <option value="price-low">Giá: Thấp -> Cao</option>
-                    <option value="price-high">Giá: Cao -> Thấp</option>
+                    <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Mới nhất</option>
+                    <option value="price-low" {% if current_sort == 'price-low' %}selected{% endif %}>Giá: thấp -> cao</option>
+                    <option value="price-high" {% if current_sort == 'price-high' %}selected{% endif %}>Giá: cao -> thấp</option>
                 </select>
             </div>
         </div>
 
         <div class="products-grid" id="products-grid">
-            <div class="product-card">
-                <div class="product-image" onclick="openProductModal('Burger Bò Phô Mai', 55000, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1899&auto=format&fit=crop', 'Thịt bò nướng lửa hồng kết hợp phô mai tan chảy và rau tươi.')">
-                    <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1899&auto=format&fit=crop" alt="Burger">
-                    <span class="stock-badge">Còn hàng</span>
-                </div>
-                <div class="product-details">
-                    <div class="top-row">
-                        <h3 class="name" onclick="openProductModal('Burger Bò Phô Mai', 55000, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1899&auto=format&fit=crop', 'Thịt bò nướng lửa hồng kết hợp phô mai tan chảy và rau tươi.')">Burger Bò Phô Mai</h3>
-                        <div class="rating"><i class="fas fa-star gold"></i> 4.8</div>
+            {% if products %}
+                {% for product in products %}
+                <div class="product-card" id="product-{{ product.id }}" data-product-name="{{ product.name|lower }}" data-product-price="{{ product.price }}" data-product-category="{{ product.category_id or '' }}">
+                    <div class="product-image" onclick='openProductModal({{ product.id }}, {{ product.name|tojson }}, {{ product.price }}, {{ product.image_url|tojson }}, {{ product.description|tojson }})'>
+                        <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                        <span class="stock-badge {% if not product.is_available %}stock-out{% endif %}">
+                            {{ 'Còn hàng' if product.is_available else 'Hết hàng' }}
+                        </span>
+                        {% if product.id in top_product_ids %}
+                        <span class="top-ordered-badge">Bán chạy</span>
+                        {% endif %}
                     </div>
-                    <p class="price">55,000₫</p>
-                    <button class="btn-add-cart" onclick="openProductModal('Burger Bò Phô Mai', 55000, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1899&auto=format&fit=crop', 'Thịt bò nướng lửa hồng kết hợp phô mai tan chảy và rau tươi.')">
-                        <i class="fa-solid fa-cart-plus"></i> Xem tùy chọn
-                    </button>
+                    <div class="product-details">
+                        <div class="top-row">
+                            <h3 class="name" onclick='openProductModal({{ product.id }}, {{ product.name|tojson }}, {{ product.price }}, {{ product.image_url|tojson }}, {{ product.description|tojson }})'>{{ product.name }}</h3>
+                            <div class="rating"><i class="fas fa-star gold"></i> {% if product.id in top_product_ids %}Hot{% else %}4.7{% endif %}</div>
+                        </div>
+                        <p class="price">{{ "{:,.0f}".format(product.price).replace(",", ".") }}₫</p>
+                        <button class="btn-add-cart" onclick='addProductToCart({{ product.id }}, {{ product.name|tojson }}, {{ product.image_url|tojson }}, {{ product.price }})'>
+                            <i class="fa-solid fa-cart-plus"></i> Đặt hàng
+                        </button>
+                    </div>
                 </div>
-            </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-products">Không tìm thấy sản phẩm phù hợp.</div>
+            {% endif %}
         </div>
 
         <div class="pagination-wrapper mt-5">
     <div class="pagination-container" id="pagination-controls">
-        <button class="page-nav-btn {% if current_page == 1 %}disabled{% endif %}" id="prev-btn">
+        <button class="page-nav-btn {% if current_page == 1 %}disabled{% endif %}" id="prev-btn" data-page="{{ current_page - 1 }}">
             Trang trước
         </button>
 
         <div class="page-numbers" id="page-numbers-container">
             {% if total_pages %}
                 {% for i in range(1, total_pages + 1) %}
-                    <button class="page-num {% if i == current_page %}active{% endif %}">{{ i }}</button>
+                    <button class="page-num {% if i == current_page %}active{% endif %}" data-page="{{ i }}">{{ i }}</button>
                 {% endfor %}
             {% else %}
-                <button class="page-num active">1</button>
+                <button class="page-num active" data-page="1">1</button>
             {% endif %}
         </div>
 
-        <button class="page-nav-btn {% if current_page == total_pages %}disabled{% endif %}" id="next-btn">
+        <button class="page-nav-btn {% if current_page == total_pages %}disabled{% endif %}" id="next-btn" data-page="{{ current_page + 1 }}">
             Trang sau
         </button>
     </div>
@@ -131,3 +152,17 @@
 </div>
 
 {% endblock %}
+
+{% block scripts %}
+<script>
+    window.currentFilters = {
+        search: {{ current_search|tojson }},
+        category: {{ current_category|tojson }},
+        sort: {{ current_sort|tojson }},
+        currentPage: {{ current_page }},
+        totalPages: {{ total_pages }}
+    };
+</script>
+<script src="{{ url_for('static', filename='js/user_products.js') }}"></script>
+{% endblock %}
+

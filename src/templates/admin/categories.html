@@ -6,10 +6,8 @@
 <div class="page-header">
     <h1 style="font-size: 24px; font-weight: 600;">Danh mục sản phẩm</h1>
     <div class="actions">
-        <button class="btn btn-upload">
-            <i class="fa-solid fa-upload"></i> Tải lên
-        </button>
-        <button class="btn btn-add">
+
+        <button class="btn btn-add" onclick="toggleModal()">
             <i class="fa-solid fa-plus"></i> Thêm mới
         </button>
     </div>
@@ -23,18 +21,143 @@
                 <th>Tên danh mục</th>
                 <th>Mã danh mục</th>
                 <th>Số lượng món</th>
-                <th>Ngày tạo</th>
-                <th>Thao tác</th>
+                <th style="text-align: right;">Thao tác</th>
             </tr>
         </thead>
         <tbody id="categoryTable">
+
+            {% for cat in categories %}
+            <tr id="category-row-{{ cat.id }}">
+                <td>{{ loop.index }}</td>
+                <td>
+                    <b>{{ cat.name }}</b>
+                    <div class="text-content-truncate" style="font-size: 12px;">{{ cat.description }}</div>
+                </td>
+                <td><span class="status-badge status-read">{{ cat.category_code }}</span></td>
+
+                <td style="font-weight: 600;">{{ cat.products|length }} món</td>
+
+                <td style="text-align: right;">
+                    <button class="btn text-danger" style="padding: 6px 10px; background: transparent;"
+                        onclick="deleteCategory({{ cat.id }})">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% else %}
             <tr>
                 <td colspan="6" class="empty-state">
                     <i class="fa-solid fa-folder-open"></i>
-                    <p>Chưa có dữ liệu danh mục. Vui lòng thêm mới hoặc kết nối Database.</p>
+                    <p>Chưa có dữ liệu danh mục. Vui lòng thêm mới.</p>
                 </td>
             </tr>
+            {% endfor %}
+
         </tbody>
     </table>
 </div>
+<div class="pagination-wrapper"
+    style="display: flex; justify-content: flex-end; align-items: center; margin-top: 20px; margin-bottom: 30px; gap: 8px;">
+
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.admin_categories', page=pagination.prev_num) }}" class="btn btn-upload"
+        style="padding: 8px 12px;">
+        <i class="fa-solid fa-chevron-left"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="padding: 8px 12px; opacity: 0.5; cursor: not-allowed;" disabled>
+        <i class="fa-solid fa-chevron-left"></i>
+    </button>
+    {% endif %}
+
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if page_num %}
+    {% if pagination.page == page_num %}
+    <button class="btn btn-add" style="padding: 8px 14px; font-weight: bold;">{{ page_num }}</button>
+    {% else %}
+    <a href="{{ url_for('admin.admin_categories', page=page_num) }}" class="btn btn-upload"
+        style="padding: 8px 14px;">{{ page_num }}</a>
+    {% endif %}
+    {% else %}
+    <span style="color: var(--text-muted);">...</span>
+    {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.admin_categories', page=pagination.next_num) }}" class="btn btn-upload"
+        style="padding: 8px 12px;">
+        <i class="fa-solid fa-chevron-right"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="padding: 8px 12px; opacity: 0.5; cursor: not-allowed;" disabled>
+        <i class="fa-solid fa-chevron-right"></i>
+    </button>
+    {% endif %}
+
+</div>
+<div id="addCategoryModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-plus-circle"></i> Thêm danh mục mới</h2>
+            <button class="close-modal" onclick="toggleModal()">&times;</button>
+        </div>
+
+        <form action="/admin/add-category" method="POST">
+            <div class="input-group" style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Tên danh
+                    mục</label>
+                <input type="text" name="ten_danh_muc" placeholder="Ví dụ: Đồ uống"
+                    style="width: 100%; box-sizing: border-box;" required>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Mã danh
+                    mục</label>
+                <input type="text" name="ma_danh_muc" placeholder="Ví dụ: DU-01"
+                    style="width: 100%; box-sizing: border-box;" required>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Mô tả</label>
+                <textarea name="mo_ta" rows="3"
+                    style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; outline: none;"></textarea>
+            </div>
+
+            <div class="modal-footer" style="text-align: right;">
+                <button type="button" class="btn btn-upload" onclick="toggleModal()">Hủy bỏ</button>
+                <button type="submit" class="btn btn-add">Lưu danh mục</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleModal() {
+        const modal = document.getElementById('addCategoryModal');
+        modal.classList.toggle('show');
+    }
+
+    function deleteCategory(categoryId) {
+        if (confirm("LƯU Ý: Xóa danh mục có thể ảnh hưởng đến các sản phẩm bên trong. Bạn có chắc chắn muốn xóa?")) {
+            fetch(`/admin/delete-category/${categoryId}`, {
+                method: 'POST',
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        document.getElementById(`category-row-${categoryId}`).remove();
+                    } else {
+                        alert("Lỗi: " + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi xóa danh mục:", err);
+                    alert("Không thể kết nối đến máy chủ.");
+                });
+        }
+    }
+</script>
 {% endblock %}

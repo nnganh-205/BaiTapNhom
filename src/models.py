@@ -1,7 +1,9 @@
 from . import db
 from datetime import datetime
+from flask_login import UserMixin
+from werkzeug.security import check_password_hash, generate_password_hash
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -17,6 +19,12 @@ class User(db.Model):
     cart = db.relationship('Cart', backref='user', uselist=False, cascade="all, delete-orphan")
     orders = db.relationship('Order', backref='user', lazy=True)
     reviews = db.relationship('Review', backref='user', lazy=True)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 
 class Category(db.Model):

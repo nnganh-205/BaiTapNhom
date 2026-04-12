@@ -1,0 +1,78 @@
+{% extends "user/layout.html" %}
+
+{% block title %}Thanh toán - InvenStory{% endblock %}
+
+{% block content %}
+<section class="bg-shop" style="padding-top: 120px;">
+    <div class="container">
+        <h2 class="mb-4">Thanh toán</h2>
+
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <form method="post" class="card border-0 shadow-sm p-4">
+                    <h5 class="mb-3">Thông tin nhận hàng</h5>
+                    <div class="mb-3">
+                        <label class="form-label" for="checkout-full-name">Họ và tên</label>
+                        <input id="checkout-full-name" class="form-control" name="full_name" value="{{ current_user.full_name or '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="checkout-phone">Số điện thoại</label>
+                        <input id="checkout-phone" class="form-control" name="phone" value="{{ current_user.phone or '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="checkout-address">Địa chỉ giao hàng</label>
+                        <input id="checkout-address" class="form-control" name="address" value="{{ current_user.address or '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="checkout-note">Ghi chú</label>
+                        <textarea id="checkout-note" class="form-control" name="note" rows="3" placeholder="Ghi chú cho đơn hàng..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Phương thức thanh toán</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="payment-cod" value="cod" checked>
+                            <label class="form-check-label" for="payment-cod">Thanh toán khi nhận hàng (COD)</label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="radio" name="payment_method" id="payment-vnpay" value="vnpay">
+                            <label class="form-check-label" for="payment-vnpay">Thanh toán qua VNPay (Sandbox)</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Xác nhận đặt hàng</button>
+                </form>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm p-4">
+                    <h5 class="mb-3">Tóm tắt đơn hàng</h5>
+                    {% for item in cart_items %}
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span>{{ item.name }} x {{ item.quantity }}</span>
+                        <strong>{{ "{:,.0f}".format(item.line_total).replace(",", ".") }}₫</strong>
+                    </div>
+                    {% endfor %}
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <span>Tạm tính</span>
+                        <strong>{{ "{:,.0f}".format(subtotal).replace(",", ".") }}₫</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <span>Phí vận chuyển</span>
+                        <strong>{% if shipping_fee == 0 %}Miễn phí{% else %}{{ "{:,.0f}".format(shipping_fee).replace(",", ".") }}₫{% endif %}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mt-3 pt-3 border-top">
+                        <span class="fw-bold">Tổng cộng</span>
+                        <span class="fw-bold text-primary">{{ "{:,.0f}".format(grand_total).replace(",", ".") }}₫</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+
+

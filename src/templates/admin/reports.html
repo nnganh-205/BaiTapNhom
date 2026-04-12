@@ -4,87 +4,220 @@
 
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .report-filter-form {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .mode-segment {
+        display: inline-flex;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .mode-segment label {
+        margin: 0;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-right: 1px solid var(--border);
+    }
+
+    .mode-segment label:last-child {
+        border-right: none;
+    }
+
+    .mode-segment input {
+        display: none;
+    }
+
+    .mode-segment input:checked + span {
+        color: var(--primary);
+    }
+
+    .report-filter-form .btn {
+        height: 40px;
+    }
+
+    .timeline-table-wrap {
+        margin-bottom: 20px;
+    }
+
+    .kpi-subtitle {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 6px;
+    }
+
+    @media (max-width: 1024px) {
+        .report-filter-form {
+            width: 100%;
+        }
+
+        .report-filter-form input,
+        .report-filter-form select,
+        .report-filter-form .btn {
+            width: 100%;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h1 class="report-title">Báo cáo doanh thu</h1>
-    <div class="header-actions">
-        <select class="report-select">
-            <option>Tùy chọn</option>
+
+    <form method="get" class="report-filter-form">
+        <div class="mode-segment">
+            <label>
+                <input type="radio" name="mode" value="range" {% if filter_mode != 'year' %}checked{% endif %}>
+                <span>Tùy chỉnh</span>
+            </label>
+            <label>
+                <input type="radio" name="mode" value="year" {% if filter_mode == 'year' %}checked{% endif %}>
+                <span>Theo năm</span>
+            </label>
+        </div>
+
+        <input type="number" name="year" value="{{ filter_year }}" min="2000" max="2100" required>
+        <input type="date" name="from" value="{{ filter_from }}" required>
+        <input type="date" name="to" value="{{ filter_to }}" required>
+        <select name="group_by" class="report-select">
+            {% if filter_group_by == 'day' %}
+            <option value="day" selected>Theo ngày</option>
+            {% else %}
+            <option value="day">Theo ngày</option>
+            {% endif %}
+            {% if filter_group_by == 'week' %}
+            <option value="week" selected>Theo tuần</option>
+            {% else %}
+            <option value="week">Theo tuần</option>
+            {% endif %}
+            {% if filter_group_by == 'month' %}
+            <option value="month" selected>Theo tháng</option>
+            {% else %}
+            <option value="month">Theo tháng</option>
+            {% endif %}
+            {% if filter_group_by == 'year' %}
+            <option value="year" selected>Theo năm</option>
+            {% else %}
+            <option value="year">Theo năm</option>
+            {% endif %}
         </select>
-        <button class="btn btn-upload">
-            <i class="fa-regular fa-calendar-days"></i> Chọn thời gian
-        </button>
-        <button class="btn btn-add">
-            <i class="fa-solid fa-magnifying-glass"></i> Xem báo cáo
-        </button>
-    </div>
+        <button type="submit" class="btn btn-add"><i class="fa-solid fa-filter"></i> Lọc</button>
+    </form>
 </div>
 
 <div class="stats-grid">
     <div class="data-card stat-card">
-        <h2>0đ</h2>
-        <p>Doanh thu kỳ này</p>
+        <h2 style="color: var(--primary);">{{ "{:,.0f}".format(dt_nay) }} đ</h2>
+        <p>Doanh thu đã thanh toán</p>
+        <div class="kpi-subtitle">
+            {% if filter_mode == 'year' %}
+            Năm {{ filter_year }}
+            {% else %}
+            Từ {{ filter_from }} đến {{ filter_to }}
+            {% endif %}
+        </div>
     </div>
     <div class="data-card stat-card">
-        <h2>0đ</h2>
-        <p>Doanh thu kỳ trước</p>
+        <h2>{{ "{:,.0f}".format(dt_truoc) }} đ</h2>
+        <p>Doanh thu kỳ so sánh</p>
+        <div class="kpi-subtitle">
+            {% if filter_mode == 'year' %}
+            Năm {{ filter_year - 1 }}
+            {% else %}
+            Cùng số ngày liền trước
+            {% endif %}
+        </div>
     </div>
     <div class="data-card stat-card">
-        <h2 class="text-muted">-- %</h2>
+        <h2 class="{% if tang_truong >= 0 %}text-success{% else %}text-danger{% endif %}">
+            {% if tang_truong > 0 %}+{% endif %}{{ tang_truong }} %
+        </h2>
         <p>Tỉ lệ tăng trưởng</p>
     </div>
 </div>
 
 <div class="data-card chart-container">
     <div class="chart-header">
-        <h4 class="card-title">So sánh cùng kỳ</h4>
-        <div class="chart-legend">
-            <span class="legend-item current"><span class="line"></span> Kỳ này</span>
-            <span class="legend-item previous"><span class="line dashed"></span> Kỳ trước</span>
-        </div>
+        <h4 class="card-title">Biểu đồ doanh thu {% if filter_mode == 'year' %}12 tháng năm {{ filter_year }}{% else %}theo thời gian{% endif %}</h4>
     </div>
     <div class="chart-wrapper">
         <canvas id="revenueChart"></canvas>
-        <div class="empty-state-overlay">
-            <i class="fa-solid fa-chart-area"></i>
-            <p>Đang chờ dữ liệu phân tích hệ thống...</p>
-        </div>
     </div>
 </div>
 
-<div class="report-bottom-section">
-    <div class="data-card tabs-card">
-        <div class="report-tab active" data-type="product">
-            <span>Doanh thu theo sản phẩm</span>
-        </div>
-        <div class="report-tab" data-type="category">
-            <span>Doanh thu theo danh mục</span>
-        </div>
+<div class="timeline-table-wrap data-card table-card">
+    <div class="table-header-reports">
+        <span>Bảng doanh thu động theo thời gian</span>
     </div>
 
+    <table class="table-reports">
+        <thead>
+            <tr>
+                <th style="width: 35%;">Mốc thời gian</th>
+                <th>Số đơn đã thanh toán</th>
+                <th>Doanh thu</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in timeline_rows %}
+            <tr>
+                <td><b>{{ row.bucket }}</b></td>
+                <td>{{ row.paid_orders }}</td>
+                <td style="color: var(--danger); font-weight: 600;">{{ "{:,.0f}".format(row.revenue) }} đ</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" class="empty-state">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <p>Không có giao dịch thanh toán trong khoảng thời gian đã chọn.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="report-bottom-section">
     <div class="data-card table-card">
         <div class="table-header-reports">
-            <input type="text" id="reportSearch" placeholder="Nhập tên sản phẩm, sku hoặc mã vạch...">
-            <button class="btn btn-add">Tìm kiếm</button>
+            <span>Top sản phẩm bán chạy</span>
         </div>
 
         <table class="table-reports">
             <thead>
                 <tr>
-                    <th id="col-name" style="width: 45%;">Tiêu chí</th>
+                    <th id="col-name" style="width: 45%;">Tên sản phẩm</th>
                     <th>Số lượng bán</th>
                     <th>Doanh thu</th>
                 </tr>
             </thead>
             <tbody id="report-tbody">
+
+                {% for sp in list_thong_ke_sp %}
+                <tr>
+                    <td><b>{{ sp.name }}</b></td>
+                    <td>{{ sp.so_luong }}</td>
+                    <td style="color: var(--danger); font-weight: 600;">{{ "{:,.0f}".format(sp.doanh_thu) }} đ</td>
+                </tr>
+                {% else %}
                 <tr>
                     <td colspan="3" class="empty-state">
                         <i class="fa-solid fa-server"></i>
                         <p>Cơ sở dữ liệu thống kê đang trống.</p>
                     </td>
                 </tr>
+                {% endfor %}
+
             </tbody>
         </table>
     </div>
@@ -92,5 +225,47 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+<script>
+    {% set chart_type = 'bar' if filter_mode == 'year' else ('line' if filter_group_by in ['day', 'week'] else 'bar') %}
+    {% set chart_fill = false if filter_mode == 'year' else (true if filter_group_by in ['day', 'week'] else false) %}
+    const chartLabels = {{ chart_labels | tojson }};
+    const chartData = {{ chart_data | tojson }};
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+
+    const revenueChart = new Chart(ctx, {
+        type: {{ chart_type | tojson }},
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Doanh thu (VNĐ)',
+                data: chartData,
+                backgroundColor: 'rgba(59, 130, 246, 0.35)',
+                borderColor: '#3b82f6',
+                borderWidth: 2,
+                tension: 0.25,
+                fill: {{ chart_fill | tojson }},
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('vi-VN') + ' đ';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}

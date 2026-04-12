@@ -18,7 +18,7 @@
     <header class="navbar-client">
         <div class="nav-container">
             <div class="logo">
-                <a href="{{ url_for('user_index') }}">
+                <a href="{{ url_for('user.user_index') }}">
                     <i class="fa-solid fa-burger fa-bounce"></i>
                     <span>InvenStory</span>
                 </a>
@@ -26,7 +26,7 @@
 
             <nav class="navigation-menu" id="navMenu">
                 <ul>
-                    <li><a href="{{ url_for('user_index') }}" class="{% if request.endpoint == 'user_index' %}active{% endif %}"><i class="fa-solid fa-house"></i> Trang chủ</a></li>
+                    <li><a href="{{ url_for('user.user_index') }}" class="{% if request.endpoint == 'user.user_index' %}active{% endif %}"><i class="fa-solid fa-house"></i> Trang chủ</a></li>
                     <li><a href="#products"><i class="fa-solid fa-utensils"></i> Sản phẩm</a></li>
                     <li><a href="#about"><i class="fa-solid fa-circle-info"></i> Giới thiệu</a></li>
 
@@ -47,12 +47,13 @@
                            <span>{{ current_user.username }}</span>
                         </div>
                         <div class="dropdown-content">
-                           <a href="#"><i class="fa-solid fa-user-gear"></i> Tài khoản</a>
-                           <a href="#"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>
+                           <a href="{{ url_for('user.profile') }}"><i class="fa-solid fa-user-gear"></i> Hồ sơ</a>
+                           <a href="{{ url_for('user.my_orders') }}"><i class="fa-solid fa-receipt"></i> Đơn hàng của tôi</a>
+                           <a href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>
                         </div>
                     </li>
                     {% else %}
-                    <li><a href="#" class="login-link"><i class="fa-solid fa-user-lock"></i> Đăng nhập</a></li>
+                    <li><a href="{{ url_for('auth.login') }}" class="login-link"><i class="fa-solid fa-user-lock"></i> Đăng nhập</a></li>
                     {% endif %}
                 </ul>
             </nav>
@@ -65,32 +66,30 @@
 
     <div id="cartOverlay" class="cart-overlay" onclick="toggleCart()"></div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% set category, message = messages[0] %}
+            <div class="top-alert-wrap">
+                <div class="top-alert {{ 'top-alert-error' if category == 'error' else 'top-alert-success' }}" role="alert">
+                    <span>{{ message }}</span>
+                    <button type="button" class="top-alert-close" onclick="this.closest('.top-alert-wrap').remove()" aria-label="Đóng">&times;</button>
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+
     <div id="sideCart" class="side-cart">
         <div class="side-cart-header">
             <h3>🛒 Giỏ hàng của bạn</h3>
             <button class="close-cart" onclick="toggleCart()">&times;</button>
         </div>
 
-        <div class="side-cart-content" id="sideCartContent">
-            <div class="side-cart-item">
-                <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=100" alt="item">
-                <div class="item-info">
-                    <h4>Burger Bò Phô Mai</h4>
-                    <div class="item-price">55,000₫</div>
-                    <div class="item-qty">
-                        <button onclick="changeQty(-1)">-</button>
-                        <span>1</span>
-                        <button onclick="changeQty(1)">+</button>
-                    </div>
-                </div>
-                <button class="del-item"><i class="fa-solid fa-trash-can"></i></button>
-            </div>
-        </div>
+        <div class="side-cart-content" id="sideCartContent"></div>
 
         <div class="side-cart-footer">
             <div class="subtotal">
                 <span>Tổng cộng:</span>
-                <span id="sideCartTotal">55,000₫</span>
+                <span id="sideCartTotal">0₫</span>
             </div>
             <button class="btn-checkout">Thanh toán ngay</button>
             <button class="btn-view-full" onclick="toggleCart()">Tiếp tục mua sắm</button>
@@ -112,8 +111,21 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        window.isAuthenticated = {{ 'true' if current_user and current_user.is_authenticated else 'false' }};
+    </script>
+    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
 
     <script src="{{ url_for('static', filename='js/product_detail.js') }}"></script>
+
+    <script>
+        setTimeout(() => {
+            const alertWrap = document.querySelector('.top-alert-wrap');
+            if (alertWrap) {
+                alertWrap.remove();
+            }
+        }, 3500);
+    </script>
 
     {% block scripts %}{% endblock %}
 </body>
