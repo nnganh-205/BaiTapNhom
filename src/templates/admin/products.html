@@ -5,57 +5,23 @@
 {% block content %}
 <div class="page-header">
     <h1 style="font-size: 24px; font-weight: 600;">Sản phẩm</h1>
-    <div class="actions">
-        <button class="btn btn-upload"><i class="fa-solid fa-upload"></i> Tải lên</button>
-        <button id="btnAddProduct" class="btn btn-add">
+    <div class="actions" style="display: flex; align-items: center; gap: 10px;">
+        <form method="GET" action="{{ url_for('admin.admin_products') }}" style="display: flex; gap: 8px; margin: 0;">
+            <input type="text" name="search" placeholder="Tìm tên, SKU, danh mục..." value="{{ search_query or '' }}"
+                style="min-width: 260px;">
+            <button type="submit" class="btn btn-upload" style="padding: 10px 14px;">
+                <i class="fa-solid fa-magnifying-glass"></i> Tìm
+            </button>
+            {% if search_query %}
+            <a href="{{ url_for('admin.admin_products') }}" class="btn btn-upload" style="padding: 10px 14px;"
+                title="Xóa lọc">
+                <i class="fa-solid fa-xmark"></i>
+            </a>
+            {% endif %}
+        </form>
+        <button id="btnAddProduct" class="btn btn-add" onclick="toggleAdminModal()">
             <i class="fa-solid fa-plus"></i> Thêm sản phẩm
         </button>
-    </div>
-</div>
-
-<div class="data-card" style="padding: 20px; margin-bottom: 24px; background: #f8fafc;">
-    <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
-        <input type="text" placeholder="Tên sản phẩm, mã SKU..." style="flex: 1; min-width: 250px;">
-
-        <span style="font-size: 13px; color: var(--text-muted);">Sắp xếp:</span>
-        <select>
-            <option value="name">Tên sản phẩm</option>
-            <option value="price">Giá bán</option>
-            <option value="stock">Số lượng tồn</option>
-        </select>
-
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <label style="font-size: 14px;"><input type="radio" name="order" checked> ↑</label>
-            <label style="font-size: 14px;"><input type="radio" name="order"> ↓</label>
-        </div>
-        <button class="btn btn-upload" style="background: #334155; color: white; border: none;">Áp dụng</button>
-    </div>
-
-    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 13px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span>Danh mục:</span>
-            <select>
-                <option value="all">Tất cả</option>
-                <option value="sua">Các loại sữa</option>
-                <option value="nuoc">Đồ uống</option>
-            </select>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span>Giá:</span>
-            <input type="number" placeholder="Từ" style="width: 90px;">
-            <input type="number" placeholder="Đến" style="width: 90px;">
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span>Tồn kho:</span>
-            <input type="number" placeholder="0" style="width: 70px;">
-            <span>-</span>
-            <input type="number" placeholder="999" style="width: 70px;">
-        </div>
-
-        <button class="btn btn-add-filter" style="padding: 8px 16px;">Lọc</button>
-        <button class="btn btn-upload" style="padding: 8px 16px;">Bỏ lọc</button>
     </div>
 </div>
 
@@ -67,74 +33,174 @@
                 <th>Ảnh</th>
                 <th>Tên sản phẩm</th>
                 <th>Danh mục</th>
-                <th>Đơn vị</th>
-                <th>Đơn giá</th>
+                <th>Giá bán</th>
+                <th>Giảm %</th>
                 <th>Tồn kho</th>
-                <th>Thao tác</th>
+                <th style="text-align: right;">Thao tác</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="productTable">
+
+            {% for product in products %}
+            {% set variant = product.variants[0] if product.variants else None %}
+
+            <tr id="product-row-{{ product.id }}">
+                <td>{{ loop.index + (pagination.page - 1) * pagination.per_page }}</td>
+                <td>
+                    {% if product.image_url %}
+                    <img src="{{ product.image_url }}" alt="Ảnh"
+                        style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">
+                    {% else %}
+                    <div
+                        style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-image text-muted"></i>
+                    </div>
+                    {% endif %}
+                </td>
+                <td>
+                    <b>{{ product.name }}</b>
+                    <div class="text-content-truncate" style="font-size: 12px;">SKU: {{ product.sku }}</div>
+                </td>
+                <td>{{ product.category.name if product.category else 'Chưa có' }}</td>
+
+                <td style="color: var(--danger); font-weight: 600;">
+                    {% set base_price = (variant.price if variant else 0) %}
+                    {% set discount_percent = (variant.discount_percent if variant else 0) %}
+                    {% set sale_price = (base_price * (1 - (discount_percent / 100))) if variant else 0 %}
+                    {% if discount_percent and discount_percent > 0 %}
+                    <div>{{ "{:,.0f}".format(sale_price) }} đ</div>
+                    <div style="font-size: 12px; color: #94a3b8; text-decoration: line-through;">{{ "{:,.0f}".format(base_price) }} đ</div>
+                    {% else %}
+                    {{ "{:,.0f}".format(base_price) if variant else '0' }} đ
+                    {% endif %}
+                </td>
+
+                <td>{{ "{:,.0f}".format(variant.discount_percent or 0) if variant else 0 }}%</td>
+
+                <td>{{ variant.stock if variant else 0 }}</td>
+
+                <td style="text-align: right;">
+                    <button class="btn btn-upload" style="padding: 6px 10px; margin-right: 6px;" title="Sửa"
+                        data-id="{{ product.id }}" data-name="{{ product.name|e }}" data-sku="{{ product.sku|e }}"
+                        data-category-id="{{ product.category_id or '' }}" data-description="{{ (product.description or '')|e }}"
+                        data-price="{{ variant.price if variant else 0 }}" data-stock="{{ variant.stock if variant else 0 }}"
+                        data-discount-percent="{{ variant.discount_percent if variant else 0 }}"
+                        onclick="openEditProductModal(this)">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn text-danger" style="padding: 6px 10px; background: transparent;"
+                        onclick="deleteProduct({{ product.id }})">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% else %}
             <tr>
                 <td colspan="8" class="empty-state">
                     <i class="fa-solid fa-box-open"></i>
-                    <p>Chưa có sản phẩm nào. Vui lòng kết nối Database hoặc thêm mới.</p>
+                    <p>Chưa có sản phẩm nào. Vui lòng thêm mới.</p>
                 </td>
             </tr>
+            {% endfor %}
+
         </tbody>
     </table>
 </div>
+<div class="pagination-wrapper"
+    style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 30px; gap: 8px;">
 
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.admin_products', page=pagination.prev_num, search=search_query) }}" class="btn btn-upload"
+        style="padding: 8px 12px;">
+        <i class="fa-solid fa-chevron-left"></i> Trước
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="padding: 8px 12px; opacity: 0.5; cursor: not-allowed;" disabled>
+        <i class="fa-solid fa-chevron-left"></i> Trước
+    </button>
+    {% endif %}
+
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if page_num %}
+    {% if pagination.page == page_num %}
+    <button class="btn btn-add" style="padding: 8px 14px; font-weight: bold;">{{ page_num }}</button>
+    {% else %}
+    <a href="{{ url_for('admin.admin_products', page=page_num, search=search_query) }}" class="btn btn-upload" style="padding: 8px 14px;">{{
+        page_num }}</a>
+    {% endif %}
+    {% else %}
+    <span style="color: var(--text-muted); padding: 0 5px;">...</span>
+    {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.admin_products', page=pagination.next_num, search=search_query) }}" class="btn btn-upload"
+        style="padding: 8px 12px;">
+        Sau <i class="fa-solid fa-chevron-right"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="padding: 8px 12px; opacity: 0.5; cursor: not-allowed;" disabled>
+        Sau <i class="fa-solid fa-chevron-right"></i>
+    </button>
+    {% endif %}
+
+</div>
 <div id="addProductModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
             <h2><i class="fa-solid fa-plus-circle"></i> Thêm sản phẩm mới</h2>
-            <button class="close-modal" onclick="toggleModal()">&times;</button>
+            <button class="close-modal" onclick="toggleAdminModal()">&times;</button>
         </div>
 
-        <form id="addProductForm" action="/admin/add-product" method="POST" enctype="multipart/form-data">
+        <form action="/admin/add-product" method="POST" enctype="multipart/form-data">
             <div class="form-grid">
                 <div class="form-left">
                     <div class="input-group">
                         <label>Tên sản phẩm</label>
-                        <input type="text" name="ten_mon" placeholder="Ví dụ: Burger Bò Đặc Biệt" required>
+                        <input type="text" name="ten_mon" required>
                     </div>
                     <div class="input-row">
                         <div class="input-group">
                             <label>Mã SKU</label>
-                            <input type="text" name="ma_sku" placeholder="BG-001" required>
+                            <input type="text" name="ma_sku" required>
                         </div>
                         <div class="input-group">
                             <label>Danh mục</label>
                             <select name="id_danh_muc" required>
                                 <option value="">-- Chọn danh mục --</option>
-                                <option value="1">Burger</option>
-                                <option value="2">Đồ uống</option>
-                                <option value="3">Mỳ Ý</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
                     <div class="input-group">
-                        <label>Mô tả định lượng</label>
-                        <textarea name="mo_ta" rows="3" placeholder="Ví dụ: 200g bò Úc..."></textarea>
+                        <label>Mô tả</label>
+                        <textarea name="mo_ta" rows="3"></textarea>
                     </div>
                 </div>
 
                 <div class="form-right">
                     <div class="input-group">
-                        <label>Hình ảnh món ăn</label>
-                        <div class="image-upload-wrapper">
+                        <label>Hình ảnh</label>
+                        <div class="image-upload-wrapper" style="position: relative;">
                             <input type="file" name="anh_san_pham" id="imageInput" accept="image/*"
-                                onchange="previewImage(this)" required>
-                            <div id="imagePreview" class="preview-box">
+                                onchange="previewImage(this)" required
+                                style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer;">
+                            <div id="imagePreview" class="preview-box" style="pointer-events: none;">
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
-                                <span>Chọn ảnh từ máy tính</span>
+                                <span>Nhấn để chọn ảnh</span>
                             </div>
                         </div>
                     </div>
                     <div class="input-row">
                         <div class="input-group">
                             <label>Giá bán (VNĐ)</label>
-                            <input type="number" name="gia" placeholder="0" required>
+                            <input type="number" name="gia" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Giảm (%)</label>
+                            <input type="number" name="giam_phan_tram" value="0" min="0" max="100">
                         </div>
                         <div class="input-group">
                             <label>Tồn kho</label>
@@ -143,12 +209,137 @@
                     </div>
                 </div>
             </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn-cancel" onclick="toggleModal()">Hủy bỏ</button>
-                <button type="submit" class="btn-submit">Lưu sản phẩm</button>
+            <div class="modal-footer" style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn btn-upload" onclick="toggleAdminModal()">Hủy bỏ</button>
+                <button type="submit" class="btn btn-add">Lưu sản phẩm</button>
             </div>
         </form>
     </div>
 </div>
+
+<div id="editProductModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-pen-to-square"></i> Sửa sản phẩm</h2>
+            <button class="close-modal" onclick="toggleEditProductModal()">&times;</button>
+        </div>
+
+        <form id="editProductForm" method="POST" enctype="multipart/form-data">
+            <div class="form-grid">
+                <div class="form-left">
+                    <div class="input-group">
+                        <label>Tên sản phẩm</label>
+                        <input type="text" name="ten_mon" id="edit_ten_mon" required>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Mã SKU</label>
+                            <input type="text" name="ma_sku" id="edit_ma_sku" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Danh mục</label>
+                            <select name="id_danh_muc" id="edit_id_danh_muc" required>
+                                <option value="">-- Chọn danh mục --</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Mô tả</label>
+                        <textarea name="mo_ta" id="edit_mo_ta" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-right">
+                    <div class="input-group">
+                        <label>Hình ảnh mới (tuỳ chọn)</label>
+                        <input type="file" name="anh_san_pham" accept="image/*">
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Giá bán (VNĐ)</label>
+                            <input type="number" name="gia" id="edit_gia" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Giảm (%)</label>
+                            <input type="number" name="giam_phan_tram" id="edit_giam_phan_tram" min="0" max="100" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Tồn kho</label>
+                            <input type="number" name="ton_kho" id="edit_ton_kho" min="0" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="margin-top: 20px; text-align: right;">
+                <button type="button" class="btn btn-upload" onclick="toggleEditProductModal()">Hủy bỏ</button>
+                <button type="submit" class="btn btn-add">Cập nhật</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleAdminModal() {
+        const modal = document.getElementById('addProductModal');
+        if (modal) {
+            modal.classList.toggle('show');
+        }
+    }
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('imagePreview').innerHTML =
+                    '<img src="' + e.target.result + '" style="width: 100%; height: 180px; object-fit: cover; border-radius: 10px;">';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function toggleEditProductModal() {
+        const modal = document.getElementById('editProductModal');
+        if (modal) {
+            modal.classList.toggle('show');
+        }
+    }
+
+    function openEditProductModal(button) {
+        const productId = button.dataset.id;
+        const search = encodeURIComponent("{{ search_query or '' }}");
+        const page = "{{ pagination.page }}";
+        document.getElementById('editProductForm').action = `/admin/update-product/${productId}?page=${page}&search=${search}`;
+        document.getElementById('edit_ten_mon').value = button.dataset.name || '';
+        document.getElementById('edit_ma_sku').value = button.dataset.sku || '';
+        document.getElementById('edit_id_danh_muc').value = button.dataset.categoryId || '';
+        document.getElementById('edit_mo_ta').value = button.dataset.description || '';
+        document.getElementById('edit_gia').value = parseFloat(button.dataset.price || 0);
+        document.getElementById('edit_giam_phan_tram').value = parseFloat(button.dataset.discountPercent || 0);
+        document.getElementById('edit_ton_kho').value = parseInt(button.dataset.stock || 0);
+        toggleEditProductModal();
+    }
+
+    function deleteProduct(productId) {
+        if (confirm("Xóa sản phẩm này sẽ xóa luôn cả lịch sử trong giỏ hàng. Bạn có chắc không?")) {
+            fetch(`/admin/delete-product/${productId}`, {
+                method: 'POST',
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        document.getElementById(`product-row-${productId}`).remove();
+                    } else {
+                        alert("Lỗi: " + data.message);
+                    }
+                });
+        }
+    }
+</script>
 {% endblock %}

@@ -1,15 +1,27 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Danh mục - InvenStory{% endblock %}
+{% block title %}Người dùng - InvenStory{% endblock %}
 
 {% block content %}
-<div class="page-header"
-    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <h1 style="font-size: 24px; font-weight: 600;">Danh mục sản phẩm</h1>
-    <div class="actions">
-        <button class="btn btn-upload"><i class="fa-solid fa-upload"></i> Tải lên</button>
-        <button class="btn btn-add"><i class="fa-solid fa-plus"></i> Thêm mới</button>
-    </div>
+<div class="page-header">
+    <h1 class="report-title">Tổng quan người dùng</h1>
+
+    <form method="GET" action="/admin/" class="header-actions" style="display: flex; gap: 10px; margin: 0;">
+        <input type="text" name="search" placeholder="Tìm tên, email, sđt..." style="width: 250px;"
+            value="{{ search_query }}">
+
+        <button type="submit" class="btn btn-add">
+            <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+        </button>
+
+        {% if search_query %}
+        <a href="/admin/" class="btn btn-upload" style="padding: 10px 14px;" title="Xóa lọc">
+            <i class="fa-solid fa-xmark"></i>
+        </a>
+        {% endif %}
+    </form>
+</div>
+
 </div>
 
 <div class="data-card">
@@ -17,21 +29,122 @@
         <thead>
             <tr>
                 <th>STT</th>
-                <th>Tên danh mục</th>
-                <th>Mã danh mục</th>
-                <th>Số lượng món</th>
+                <th>Người dùng</th>
+                <th>Số điện thoại</th>
+                <th>Vai trò</th>
                 <th>Ngày tạo</th>
-                <th>Thao tác</th>
+                <th style="text-align: right;">Thao tác</th>
             </tr>
         </thead>
-        <tbody id="categoryTable">
-            <tr>
-                <td colspan="6" style="text-align: center; padding: 40px; color: #9ca3af;">
-                    <i class="fa-solid fa-inbox fa-2x" style="display: block; margin-bottom: 10px;"></i>
-                    Chưa có dữ liệu danh mục. Vui lòng thêm mới hoặc kết nối Database.
+        <tbody id="userTable">
+
+            {% for user in users %}
+            <tr id="user-row-{{ user.id }}">
+                <td>{{ loop.index + (pagination.page - 1) * pagination.per_page }}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div>
+                            <b>{{ user.full_name }}</b>
+                            <div class="text-content-truncate" style="font-size: 12px;">{{ user.email }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>{{ user.phone or 'Chưa cập nhật' }}</td>
+                <td>
+                    {% if user.role == 'admin' %}
+                    <span class="status-badge" style="background: #fee2e2; color: #991b1b;">Admin</span>
+                    {% else %}
+                    <span class="status-badge status-read">Khách hàng</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else '' }}</td>
+                <td style="text-align: right; color: var(--text-muted);">
+
+                    <button class="btn text-danger" style="padding: 6px 10px; background: transparent;" title="Xóa"
+                        onclick="deleteUser({{ user.id }})">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+
                 </td>
             </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="empty-state">
+                    <i class="fa-solid fa-users"></i>
+                    <p>Chưa có dữ liệu người dùng nào</p>
+                </td>
+            </tr>
+            {% endfor %}
+
         </tbody>
     </table>
 </div>
+<div class="pagination-wrapper"
+    style="display: flex; justify-content: flex-end; align-items: center; margin-top: 20px; gap: 8px;">
+
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.admin_index', page=pagination.prev_num, search=search_query) }}" class="btn btn-upload">
+        <i class="fa-solid fa-chevron-left"></i> Trước
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="opacity: 0.5; cursor: not-allowed;" disabled>
+        <i class="fa-solid fa-chevron-left"></i> Trước
+    </button>
+    {% endif %}
+
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if page_num %}
+    {% if pagination.page == page_num %}
+    <button class="btn btn-add" style="padding: 8px 14px; font-weight: bold;">{{ page_num }}</button>
+    {% else %}
+    <a href="{{ url_for('admin.admin_index', page=page_num, search=search_query) }}" class="btn btn-upload"
+        style="padding: 8px 14px;">{{ page_num }}</a>
+    {% endif %}
+    {% else %}
+    <span style="color: var(--text-muted);">...</span>
+    {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.admin_index', page=pagination.next_num, search=search_query) }}" class="btn btn-upload">
+        Sau <i class="fa-solid fa-chevron-right"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-upload" style="opacity: 0.5; cursor: not-allowed;" disabled>
+        Sau <i class="fa-solid fa-chevron-right"></i>
+    </button>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function deleteUser(userId) {
+        let xacNhan = confirm("Bạn có chắc chắn muốn xóa người dùng này không? Hành động này không thể hoàn tác.");
+        if (xacNhan) {
+            fetch(`/admin/delete-user/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        let row = document.getElementById(`user-row-${userId}`);
+                        if (row) {
+                            row.remove();
+                        }
+                    } else {
+                        alert("Lỗi: " + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi:', error);
+                    alert("Có lỗi xảy ra khi gọi máy chủ!");
+                });
+        }
+    }
+</script>
 {% endblock %}

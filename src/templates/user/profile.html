@@ -1,0 +1,56 @@
+{% extends "user/layout.html" %}
+
+{% block title %}Hồ sơ - InvenStory{% endblock %}
+
+{% block content %}
+<section class="bg-shop" style="padding-top: 120px;">
+    <div class="container">
+        <div class="account-shell">
+            <aside class="account-sidebar">
+                <div class="account-brief">
+                    <div class="avatar-round">{{ (current_user.username[:1] if current_user.username else 'U') | upper }}</div>
+                    <div>
+                        <strong>{{ current_user.username }}</strong>
+                        <div class="text-muted small">{{ current_user.email }}</div>
+                    </div>
+                </div>
+
+                <div class="account-links">
+                    <a href="{{ url_for('user.profile') }}" class="active"><i class="fa-solid fa-user me-2"></i>Hồ sơ</a>
+                    <a href="{{ url_for('user.my_orders') }}"><i class="fa-solid fa-receipt me-2"></i>Đơn hàng của tôi</a>
+                    <a href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất</a>
+                </div>
+            </aside>
+
+            <div class="account-main">
+                <h3 class="mb-1">Hồ sơ của bạn</h3>
+                <p class="text-muted mb-4">Theo dõi thông tin tài khoản và dữ liệu nhận hàng.</p>
+
+                <div class="profile-grid">
+                    <div class="profile-item">
+                        <span>Tên đăng nhập</span>
+                        <strong>{{ current_user.username }}</strong>
+                    </div>
+                    <div class="profile-item">
+                        <span>Họ và tên</span>
+                        <strong>{{ current_user.full_name }}</strong>
+                    </div>
+                    <div class="profile-item">
+                        <span>Email</span>
+                        <strong>{{ current_user.email }}</strong>
+                    </div>
+                    <div class="profile-item">
+                        <span>Số điện thoại</span>
+                        <strong>{{ current_user.phone or 'Chưa cập nhật' }}</strong>
+                    </div>
+                    <div class="profile-item" style="grid-column: 1 / -1;">
+                        <span>Địa chỉ</span>
+                        <strong>{{ current_user.address or 'Chưa cập nhật' }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
