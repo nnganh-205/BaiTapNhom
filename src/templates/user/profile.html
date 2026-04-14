@@ -3,54 +3,95 @@
 {% block title %}Hồ sơ - InvenStory{% endblock %}
 
 {% block content %}
-<section class="bg-shop" style="padding-top: 120px;">
-    <div class="container">
-        <div class="account-shell">
-            <aside class="account-sidebar">
-                <div class="account-brief">
-                    <div class="avatar-round">{{ (current_user.username[:1] if current_user.username else 'U') | upper }}</div>
-                    <div>
-                        <strong>{{ current_user.username }}</strong>
-                        <div class="text-muted small">{{ current_user.email }}</div>
-                    </div>
-                </div>
-
-                <div class="account-links">
-                    <a href="{{ url_for('user.profile') }}" class="active"><i class="fa-solid fa-user me-2"></i>Hồ sơ</a>
-                    <a href="{{ url_for('user.my_orders') }}"><i class="fa-solid fa-receipt me-2"></i>Đơn hàng của tôi</a>
-                    <a href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất</a>
-                </div>
-            </aside>
-
-            <div class="account-main">
-                <h3 class="mb-1">Hồ sơ của bạn</h3>
-                <p class="text-muted mb-4">Theo dõi thông tin tài khoản và dữ liệu nhận hàng.</p>
-
-                <div class="profile-grid">
-                    <div class="profile-item">
-                        <span>Tên đăng nhập</span>
-                        <strong>{{ current_user.username }}</strong>
-                    </div>
-                    <div class="profile-item">
-                        <span>Họ và tên</span>
-                        <strong>{{ current_user.full_name }}</strong>
-                    </div>
-                    <div class="profile-item">
-                        <span>Email</span>
-                        <strong>{{ current_user.email }}</strong>
-                    </div>
-                    <div class="profile-item">
-                        <span>Số điện thoại</span>
-                        <strong>{{ current_user.phone or 'Chưa cập nhật' }}</strong>
-                    </div>
-                    <div class="profile-item" style="grid-column: 1 / -1;">
-                        <span>Địa chỉ</span>
-                        <strong>{{ current_user.address or 'Chưa cập nhật' }}</strong>
-                    </div>
+<section class="profile-section">
+    <div class="profile-card">
+        <div class="profile-header">
+            <div class="profile-avatar-block">
+                <img src="https://ui-avatars.com/api/?name={{ current_user.username }}&background=3b82f6&color=fff&size=128" class="profile-avatar" alt="Avatar">
+                <div class="profile-user-info">
+                    <div class="profile-name">{{ current_user.full_name or current_user.username }}</div>
+                    <div class="profile-email">{{ current_user.email }}</div>
                 </div>
             </div>
+            <div class="profile-header-actions">
+                <button type="button" class="profile-edit-btn" id="editProfileBtn">Chỉnh sửa</button>
+                <button type="submit" class="profile-save-btn" id="saveProfileBtn" style="display:none">Lưu</button>
+                <button type="button" class="profile-cancel-btn" id="cancelProfileBtn" style="display:none">Hủy</button>
+            </div>
         </div>
+        <form class="profile-form" id="profileForm" method="POST" action="{{ url_for('user.profile') }}">
+            <div class="profile-form-row">
+                <div class="profile-form-group">
+                    <label for="profile-fullname">Họ và tên</label>
+                    <input id="profile-fullname" name="full_name" type="text" value="{{ current_user.full_name }}" placeholder="Nhập họ và tên" readonly>
+                </div>
+                <div class="profile-form-group">
+                    <label for="profile-phone">Số điện thoại</label>
+                    <input id="profile-phone" name="phone" type="text" value="{{ current_user.phone or '' }}" placeholder="Nhập số điện thoại" readonly>
+                </div>
+            </div>
+            <div class="profile-form-row">
+                <div class="profile-form-group">
+                    <label for="profile-gender">Giới tính</label>
+                    <select id="profile-gender" name="gender" disabled>
+                        <option value="">Chọn giới tính</option>
+                        <option value="Nam" {% if current_user.gender=='Nam' %}selected{% endif %}>Nam</option>
+                        <option value="Nữ" {% if current_user.gender=='Nữ' %}selected{% endif %}>Nữ</option>
+                        <option value="Khác" {% if current_user.gender=='Khác' %}selected{% endif %}>Khác</option>
+                    </select>
+                </div>
+            </div>
+            <div class="profile-form-row">
+                <div class="profile-form-group" style="flex:1">
+                    <label for="profile-email">Email</label>
+                    <input id="profile-email" name="email" type="email" value="{{ current_user.email }}" placeholder="Nhập email" readonly>
+                </div>
+            </div>
+        </form>
     </div>
 </section>
 {% endblock %}
 
+{% block scripts %}
+<script>
+    const editBtn = document.getElementById('editProfileBtn');
+    const saveBtn = document.getElementById('saveProfileBtn');
+    const cancelBtn = document.getElementById('cancelProfileBtn');
+    const form = document.getElementById('profileForm');
+    const inputs = form.querySelectorAll('input, select');
+    let originalValues = {};
+
+    editBtn.onclick = function() {
+        inputs.forEach(input => {
+            if (input.name !== 'nickname') {
+                input.removeAttribute('readonly');
+                input.removeAttribute('disabled');
+            }
+        });
+        originalValues = {};
+        inputs.forEach(input => { originalValues[input.name] = input.value; });
+        editBtn.style.display = 'none';
+        saveBtn.style.display = '';
+        cancelBtn.style.display = '';
+    };
+    cancelBtn.onclick = function() {
+        inputs.forEach(input => {
+            input.value = originalValues[input.name];
+            input.setAttribute('readonly', true);
+            if (input.tagName === 'SELECT') input.setAttribute('disabled', true);
+        });
+        editBtn.style.display = '';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+    };
+    form.onsubmit = function() {
+        inputs.forEach(input => {
+            input.setAttribute('readonly', true);
+            if (input.tagName === 'SELECT') input.setAttribute('disabled', true);
+        });
+        editBtn.style.display = '';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+    };
+</script>
+{% endblock %}

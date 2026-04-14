@@ -68,6 +68,22 @@ def save_thread(user_id: str, chat_session_id: str) -> None:
         )
 
 
+def get_user_threads(user_id: str) -> List[Dict[str, str]]:
+    """Get all chat sessions for a user ordered by recent access."""
+    with _get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT chat_session_id, created_at, updated_at, is_active
+            FROM chat_sessions
+            WHERE user_id = ?
+            ORDER BY updated_at DESC
+            """,
+            (user_id,),
+        ).fetchall()
+
+    return [dict(row) for row in rows]
+
+
 def update_thread_access(user_id: str, chat_session_id: str, is_active: Optional[bool] = None) -> None:
     with _get_connection() as conn:
         if is_active is None:

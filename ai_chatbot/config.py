@@ -17,3 +17,4 @@ def load_env() -> None:
 def has_google_api_key() -> bool:
     return bool(os.getenv("GOOGLE_API_KEY", "").strip())
 
+

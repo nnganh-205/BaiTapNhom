@@ -2,6 +2,7 @@ import logging
 import time
 import uuid
 from contextlib import asynccontextmanager
+from typing import List
 import os
 
 from fastapi import FastAPI, HTTPException
@@ -10,6 +11,7 @@ from pydantic import BaseModel, Field, field_validator
 from ai_chatbot.chatbot import chat_once
 from ai_chatbot.databases.sqlite_db import (
     get_thread_messages,
+    get_user_threads,
     init_db,
     save_message,
     save_thread,
@@ -48,9 +50,47 @@ class ChatResponse(BaseModel):
     answer: str
 
 
+class ThreadInfo(BaseModel):
+    chat_session_id: str
+    created_at: str
+    updated_at: str
+    is_active: int
+
+
+class ThreadMessages(BaseModel):
+    messages: List[dict]
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+@app.get("/threads/{user_id}", response_model=List[ThreadInfo])
+def get_threads(user_id: str) -> List[ThreadInfo]:
+    """Get all chat sessions for a user."""
+    try:
+        threads = get_user_threads(user_id)
+        return [ThreadInfo(**thread) for thread in threads]
+    except Exception as exc:
+        logger.exception("get_threads_failure user_id=%s error=%s", user_id, exc)
+        raise HTTPException(status_code=500, detail="Internal server error") from exc
+
+
+@app.get("/threads/{user_id}/{chat_session_id}", response_model=ThreadMessages)
+def get_thread_messages_endpoint(user_id: str, chat_session_id: str) -> ThreadMessages:
+    """Get all messages from a chat session."""
+    try:
+        messages = get_thread_messages(user_id, chat_session_id)
+        return ThreadMessages(messages=messages)
+    except Exception as exc:
+        logger.exception(
+            "get_thread_messages_failure user_id=%s session=%s error=%s",
+            user_id,
+            chat_session_id,
+            exc,
+        )
+        raise HTTPException(status_code=500, detail="Internal server error") from exc
 
 
 @app.post("/chat", response_model=ChatResponse)

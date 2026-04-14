@@ -15,6 +15,9 @@ def run_demo() -> None:
         "Top món bán chạy hiện tại là gì?",
         "Pizza Mini giá bao nhiêu?",
         "Thanh toán VNPay như nào?",
+        "Bạn có người yêu chưa?",  # Out-of-scope, kiểm tra trả lời nhí nhảnh
+        "Thời tiết hôm nay thế nào?",  # Out-of-scope, kiểm tra trả lời nhí nhảnh
+        "Gợi ý combo dưới 200k cho 3 người",  # In-scope, kiểm tra logic cũ
     ]
 
     for query in demo_queries:
@@ -27,4 +30,3 @@ def run_demo() -> None:
 
 if __name__ == "__main__":
     run_demo()
-
