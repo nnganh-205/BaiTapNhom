@@ -76,11 +76,14 @@ def _get_order_items(order_id):
         .all()
     )
     items = []
+    fallback_image = "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=400&auto=format&fit=crop"
     for order_item, product in rows:
         line_total = float(order_item.price_at_purchase) * order_item.quantity
         items.append(
             {
+                "product_id": product.id,
                 "product_name": product.name,
+                "image_url": product.image_url or fallback_image,
                 "quantity": order_item.quantity,
                 "unit_price": float(order_item.price_at_purchase),
                 "size_name": (order_item.size_name or "S").upper(),

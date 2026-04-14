@@ -2,9 +2,21 @@ import os
 import re
 import sqlite3
 import unicodedata
-from typing import Dict, List, Set
+import random
+from typing import Any, Dict, List, Set, Optional
 
-import requests
+from langgraph.graph import StateGraph, MessagesState, START, END
+from langgraph.checkpoint.memory import MemorySaver
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from dotenv import load_dotenv
+
+from ai_chatbot.llms.gemini import LLM
+
+load_dotenv()
+
+# Custom State bao gồm messages từ MessagesState + custom context
+class State(MessagesState):
+    context: List[str]
 
 
 def _default_app_db_path() -> str:
@@ -194,13 +206,13 @@ def get_domain_context() -> Dict[str, List[Dict[str, str]]]:
 def _score_product_relevance(product: Dict[str, str], query_tokens: Set[str]) -> int:
     if not query_tokens:
         return 0
-
-    fields = [product["name"], product["category"], product["description"]]
+    # So khớp các trường chính của sản phẩm
+    fields = [product.get("name", ""), product.get("description", ""), product.get("category", "")]
     score = 0
     for field in fields:
         field_tokens = _tokenize(field)
         overlap = len(field_tokens & query_tokens)
-        score += overlap * (3 if field == product["name"] else 1)
+        score += overlap * (3 if field == product.get("name", "") else 1)
     return score
 
 
@@ -453,6 +465,19 @@ def _build_addon_recommendation(
         reverse=True,
     )
 
+    if not ranked:
+        return ""
+
+    picks = ", ".join(f"{x['name']} ({x['price']})" for x in ranked[:3])
+    return _pick_variant(
+        f"{query}-addon-{bucket}-{repeated_count}",
+        [
+            f"Nếu bạn muốn thêm {bucket_label}, mình gợi ý: {picks}.",
+            f"Bạn có thể ghép thêm {bucket_label} như: {picks}.",
+            f"Để combo đầy đủ hơn, thử {bucket_label}: {picks}.",
+        ],
+    )
+
 
 def _fuzzy_token_score(query_tokens: Set[str], candidate_tokens: Set[str]) -> int:
     score = 0
@@ -468,7 +493,7 @@ def _fuzzy_token_score(query_tokens: Set[str], candidate_tokens: Set[str]) -> in
     return score
 
 
-def _find_best_product_match(query: str, products: List[Dict[str, str]]) -> Dict[str, str] | None:
+def _find_best_product_match(query: str, products: List[Dict[str, str]]) -> Optional[Dict[str, str]]:
     normalized_query = _normalize_text(query)
     query_tokens = _tokenize(query)
     if not products or not query_tokens:
@@ -586,130 +611,8 @@ def _get_discounted_products(products: List[Dict[str, str]], only_available: boo
     )
     return discounted[:limit]
 
-    if budget > 0:
-        target_per_person = budget // max(1, people) if people > 0 else budget
-        soft_cap = max(target_per_person, int(target_per_person * 1.2), 1)
-        affordable = [x for x in ranked if x["price_value"] <= soft_cap]
-        picks = affordable[:3] if affordable else sorted(candidates, key=lambda x: x["price_value"])[:3]
-        joined = ", ".join(f"{x['name']} ({x['price']})" for x in picks)
 
-        if people > 0:
-            return _pick_variant(
-                f"{query}-{bucket}-{repeated_count}",
-                [
-                    f"Theo mạch trước ({_format_currency(budget)} cho {people} người), {bucket_label} hợp lý là: {joined}.",
-                    f"Nếu giữ mức khoảng {_format_currency(target_per_person)}/người, bạn có thể chọn {bucket_label}: {joined}.",
-                    f"Để ghép combo trước đó cho {people} người, mình gợi ý {bucket_label}: {joined}.",
-                ],
-            )
-
-        return _pick_variant(
-            f"{query}-{bucket}-{repeated_count}",
-            [
-                f"Theo ngân sách {_format_currency(budget)}, bạn có thể thêm {bucket_label}: {joined}.",
-                f"Mức này vẫn ổn để chọn {bucket_label}: {joined}.",
-            ],
-        )
-
-    joined = ", ".join(f"{x['name']} ({x['price']})" for x in ranked[:3])
-    return _pick_variant(
-        f"{query}-{bucket}-{repeated_count}",
-        [
-            f"Nếu bạn muốn thêm {bucket_label}, mình gợi ý: {joined}.",
-            f"{bucket_label.capitalize()} đang dễ chọn hiện tại: {joined}.",
-        ],
-    )
-
-
-def _is_in_domain(query: str, context: Dict[str, List[Dict[str, str]]]) -> bool:
-    normalized = _normalize_text(query)
-    intents = _detect_intents(query)
-
-    # Intent-based shopping questions (e.g. "200k an gi") are in-domain
-    # even when they do not mention explicit topic keywords.
-    if intents & {"menu", "budget", "popular", "payment", "availability", "diet", "greeting"}:
-        return True
-
-    if any(topic in normalized for topic in ALLOWED_TOPICS):
-        return True
-    for item in context["products"]:
-        if _normalize_text(item["name"]) in normalized:
-            return True
-    if _find_best_product_match(query, context["products"]):
-        return True
-    return False
-
-
-def _pick_variant(query: str, variants: List[str]) -> str:
-    if not variants:
-        return ""
-    # Keep output varied but deterministic per question and repeated turn.
-    normalized = _normalize_text(query)
-    offset = 0
-    suffix_match = re.search(r"-(\d+)$", normalized)
-    if suffix_match:
-        offset = int(suffix_match.group(1))
-        normalized = normalized[: suffix_match.start()]
-    index = (abs(hash(normalized)) + offset) % len(variants)
-    return variants[index]
-
-
-def _build_style_note(query: str, repeated_count: int) -> str:
-    return _pick_variant(
-        f"{query}-style-{repeated_count}",
-        [
-            "Giọng điệu ưu tiên: thân thiện, ngắn gọn, có thể dùng 1 emoji nhẹ nếu phù hợp.",
-            "Giọng điệu ưu tiên: tư vấn rõ ràng theo từng lựa chọn, tránh lặp lại câu cũ.",
-            "Giọng điệu ưu tiên: tự nhiên như nhân viên cửa hàng, chốt ý nhanh và dễ quyết định.",
-        ],
-    )
-
-
-def _build_out_of_scope_reply(query: str) -> str:
-    return _pick_variant(
-        f"{query}-oos",
-        [
-            (
-                "Mình đang tập trung hỗ trợ InvenStory về món ăn, giá, tồn kho, đặt hàng, giao hàng và VNPay. "
-                "Bạn có thể nói nhu cầu theo kiểu '2 người dưới 200k' hoặc 'món nào còn hàng' để mình gợi ý ngay."
-            ),
-            (
-                "Nội dung này hơi ngoài phạm vi tư vấn bán hàng của InvenStory. "
-                "Nếu bạn cần, mình có thể đề xuất combo theo ngân sách, món bán chạy hoặc cách thanh toán VNPay."
-            ),
-            (
-                "Mình chưa hỗ trợ chủ đề này, nhưng rất sẵn sàng tư vấn menu InvenStory. "
-                "Bạn muốn mình lọc theo ngân sách, khẩu vị hay món đang còn hàng?"
-            ),
-        ],
-    )
-
-
-def _category_bucket(category: str, name: str) -> str:
-    text = _normalize_text(f"{category} {name}")
-    if any(keyword in text for keyword in ["trang mieng", "dessert", "cake", "pudding", "flan"]):
-        return "dessert"
-    if any(keyword in text for keyword in ["do uong", "nuoc", "tra", "coffee", "drink"]):
-        return "drink"
-    return "main"
-
-
-def _extract_budget_preferences(query: str) -> Dict[str, bool]:
-    normalized = _normalize_text(query)
-    return {
-        "wants_main": any(keyword in normalized for keyword in ["do an", "mon", "an no", "burger", "pizza", "ga", "pasta"]),
-        "wants_dessert": any(keyword in normalized for keyword in ["trang mieng", "dessert", "banh", "ngot", "flan", "pudding"]),
-        "wants_drink": any(keyword in normalized for keyword in ["do uong", "nuoc", "tra", "coffee", "drink"]),
-    }
-
-
-def _build_budget_recommendation(
-    query: str,
-    available: List[Dict[str, str]],
-    budget: int,
-    people: int,
-    repeated_count: int,
-) -> str:
+def _build_budget_recommendation(query: str, available: List[Dict[str, str]], budget: int, people: int, repeated_count: int) -> str:
     query_tokens = _tokenize(query)
     target_per_person = budget // people if people > 0 else budget
     target = max(target_per_person, 1)
@@ -1121,40 +1024,64 @@ def _fallback_answer(query: str, context: Dict[str, List[Dict[str, str]]], histo
 
 
 def _call_gemini(system_prompt: str, history: List[Dict[str, str]], query: str) -> str:
-    if not GEMINI_API_KEY:
-        raise ValueError("missing GOOGLE_API_KEY")
+    """
+    Call Gemini model using LangChain wrapper.
+    Fallback mechanism with try-except untuk stability.
+    """
+    try:
+        model = LLM(model_name="gemini-2.0-flash")
 
-    endpoint = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-        f"?key={GEMINI_API_KEY}"
-    )
+        # Xây dựng message list từ history
+        messages = []
+        for item in history[-20:]:
+            role = "assistant" if item.get("role") == "assistant" else "user"
+            if role == "user":
+                messages.append(HumanMessage(content=item.get("content", "")))
+            else:
+                messages.append(AIMessage(content=item.get("content", "")))
 
-    contents = []
-    for item in history[-20:]:
-        role = "model" if item.get("role") == "assistant" else "user"
-        contents.append({"role": role, "parts": [{"text": item.get("content", "")}]})
+        # Thêm current query
+        messages.append(HumanMessage(content=query))
 
-    contents.append({"role": "user", "parts": [{"text": query}]})
+        # Invoke model with system prompt
+        response = model.invoke(
+            [SystemMessage(content=system_prompt)] + messages
+        )
 
-    payload = {
-        "system_instruction": {"parts": [{"text": system_prompt}]},
-        "contents": contents,
-        "generationConfig": {
-            "temperature": 0.8,
-            "topP": 0.9,
-            "maxOutputTokens": 600,
-        },
-    }
-
-    response = requests.post(endpoint, json=payload, timeout=35)
-    response.raise_for_status()
-    data = response.json()
-
-    candidates = data.get("candidates") or []
-    if not candidates:
+        # Extract text content
+        if isinstance(response, AIMessage):
+            return _content_to_text(response.content)
+        return _content_to_text(response.content if hasattr(response, 'content') else str(response))
+    except Exception as e:
+        # Log lỗi nhưng không raise - return empty string để dùng fallback
+        import traceback
+        print(f"Gemini API error: {e}")
+        traceback.print_exc()
         return ""
-    parts = candidates[0].get("content", {}).get("parts", [])
-    return "\n".join(part.get("text", "") for part in parts).strip()
+
+
+def _content_to_text(content: Any) -> str:
+    """Convert various content types to string."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        text_parts = []
+        for item in content:
+            if isinstance(item, dict):
+                text_parts.append(str(item.get("text", item)))
+            else:
+                text_parts.append(str(item))
+        return "\n".join(text_parts)
+    return str(content)
+
+
+def _build_style_note(query: str, repeated_count: int) -> str:
+    """
+    Sinh ghi chú phong cách trả lời cho AI. Có thể mở rộng về sau.
+    """
+    if repeated_count > 1:
+        return "Trả lời thân thiện, linh hoạt, tránh lặp lại, có thể thêm chút hài hước nếu khách hỏi lặp."
+    return "Trả lời thân thiện, tự nhiên, ngắn gọn, dễ hiểu, ưu tiên gợi ý món phù hợp."
 
 
 def chat_once(user_id: str, chat_session_id: str, new_query: str, history: List[Dict[str, str]]) -> str:
@@ -1197,3 +1124,63 @@ def chat_once(user_id: str, chat_session_id: str, new_query: str, history: List[
 
     return _fallback_answer(new_query, context, history)
 
+
+def _is_in_domain(query: str, context: Dict[str, List[Dict[str, str]]]) -> bool:
+    """
+    Kiểm tra xem câu hỏi có thuộc phạm vi tư vấn sản phẩm, món ăn, dịch vụ không.
+    """
+    tokens = _tokenize(query)
+    for topic in ALLOWED_TOPICS:
+        if topic in tokens:
+            return True
+    for product in context.get("products", []):
+        name = _normalize_text(product.get("name", ""))
+        if name and name in _normalize_text(query):
+            return True
+    intents = _detect_intents(query)
+    if intents:
+        return True
+    return False
+
+
+def _category_bucket(category: str, name: str) -> str:
+    """
+    Phân loại sản phẩm thành các nhóm chính: main, dessert, drink.
+    """
+    cat = _normalize_text(category)
+    nm = _normalize_text(name)
+    if any(k in cat or k in nm for k in ["trang mieng", "dessert", "banh", "pudding", "flan", "lava", "kem"]):
+        return "dessert"
+    if any(k in cat or k in nm for k in ["nuoc", "drink", "tra", "coffee", "sua", "do uong"]):
+        return "drink"
+    return "main"
+
+
+def _pick_variant(key: str, variants: list) -> str:
+    """
+    Chọn ngẫu nhiên một câu trả lời từ danh sách, giúp chatbot trả lời tự nhiên, nhí nhảnh.
+    """
+    if not variants:
+        return ""
+    return random.choice(variants)
+
+def _extract_budget_preferences(query: str) -> dict:
+    """
+    Phân tích query để xác định người dùng có muốn tráng miệng hoặc đồ uống không.
+    """
+    normalized = _normalize_text(query)
+    return {
+        "wants_dessert": any(k in normalized for k in ["trang mieng", "dessert", "banh", "pudding", "flan", "lava", "kem"]),
+        "wants_drink": any(k in normalized for k in ["nuoc", "drink", "tra", "coffee", "sua", "do uong"]),
+    }
+
+def _build_out_of_scope_reply(query: str) -> str:
+    playful_variants = [
+        "Ối dồi ôi, câu này hack não quá, AI nhà InvenStory xin phép né nhẹ nha 😝! Mình chỉ giỏi tư vấn món ăn, combo, giá cả, đặt hàng, săn sale thôi á 🍔🥤. Bạn thử hỏi mình món nào ngon, còn hàng, hoặc nhờ gợi ý combo tiết kiệm nhé!",
+        "Huhu, câu này ngoài vùng phủ sóng của mình rồi 🥲. Nhưng nếu bạn muốn biết món gì ngon, món nào đang giảm giá, hay cách đặt hàng thì hỏi mình liền nha! 🍕🍟🥤",
+        "Câu này mình chịu thua luôn á 😅. Nhưng mà mình cực đỉnh tư vấn đồ ăn, combo tiết kiệm, săn sale, đặt hàng xịn xò nha! Bạn hỏi thử về menu hoặc món bán chạy xem! 🍔✨",
+        "Eo ơi, câu này khó quá trời, mình chỉ biết tư vấn món ăn, combo, giá cả, đặt hàng thôi nè! Nếu bạn cần gợi ý món ngon, combo cho nhiều người hay săn ưu đãi thì hỏi mình nha! 😋🍟",
+        "Chuyện tình cảm, thời tiết mình chịu nha 😆. Nhưng hỏi về đồ ăn, combo, săn sale thì mình là số 1 luôn! Bạn thử hỏi món nào đang hot hoặc combo tiết kiệm đi! 🍕🔥"
+    ]
+    import random
+    return random.choice(playful_variants)
